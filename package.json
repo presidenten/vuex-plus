@@ -2,7 +2,7 @@
   "name": "vuex-plus",
   "version": "0.1.0",
   "description": "Opinionated library that handles module instances in Vuex",
-  "main": "src/vuex+.js",
+  "main": "dist/vuex+.js",
   "scripts": {
     "prebuild": "mkdir -p dist",
     "build": "node node_modules/babel-cli/bin/babel src -d dist",

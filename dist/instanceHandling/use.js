@@ -9,6 +9,8 @@ var _keys = require('babel-runtime/core-js/object/keys');
 
 var _keys2 = _interopRequireDefault(_keys);
 
+var _helpers = require('./helpers.js');
+
 var _mappingFunctions = require('./mappingFunctions.js');
 
 var _mappingFunctions2 = _interopRequireDefault(_mappingFunctions);
@@ -24,11 +26,6 @@ var _useStore2 = _interopRequireDefault(_useStore);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var importer = void 0;
-var toCamelCase = function toCamelCase(str) {
-  return str.replace(/(-|_)([a-z])/g, function (s) {
-    return s[1].toUpperCase();
-  });
-};
 
 var api = exports.api = {};
 
@@ -37,7 +34,7 @@ var setup = exports.setup = function setup(newImporter) {
 
   var modules = importer.getModules();
   (0, _keys2.default)(modules).forEach(function (module) {
-    var camelCasedName = toCamelCase(modules[module].name);
+    var camelCasedName = (0, _helpers.toCamelCase)(modules[module].name);
     api[camelCasedName] = modules[module].api;
   });
 };
@@ -53,7 +50,7 @@ var use = exports.use = function use(baseStoreName) {
     throw new ModuleNotFoundException(baseStoreName);
   }
 
-  baseStoreName = baseStoreName.replace(/-store$/, '');
+  baseStoreName = (0, _helpers.toCamelCase)(baseStoreName.replace(/-store$/, ''));
 
   var _generateMappingFunct = (0, _mappingFunctions2.default)(baseStoreName),
       mapActions = _generateMappingFunct.mapActions,

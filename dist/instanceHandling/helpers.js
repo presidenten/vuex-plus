@@ -9,3 +9,9 @@ var getStoreInstanceName = exports.getStoreInstanceName = function getStoreInsta
   }
   return storeName;
 };
+
+var toCamelCase = exports.toCamelCase = function toCamelCase(str) {
+  return str.replace(/(-|_)([a-z])/g, function (s) {
+    return s[1].toUpperCase();
+  });
+};
