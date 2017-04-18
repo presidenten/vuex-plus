@@ -3,11 +3,8 @@ const toCamelCase = string => string.replace(/(-|_)([a-z])/g, function (s) { ret
 
 module.exports = function(source) {
   const sourcePath = this.resourcePath.replace(/\\/g, '/');
-  const isSubstore = sourcePath.indexOf('-substore') >= 0;
   let filename = getFileName(sourcePath).replace(/-store|-substore/, '');
-  if(isSubstore) {
-    filename = toCamelCase(filename);
-  }
+  filename = toCamelCase(filename);
 
   const exportString = 'export default store({';
   const nameString = '\n  name: \'' + filename + '\',';

@@ -1,9 +1,9 @@
+import { toCamelCase } from './helpers.js';
 import generateMappingFunction from './mappingFunctions.js';
 import generateAddStore from '../mixins/addStore.js';
 import useStore from '../mixins/useStore.js';
 
 let importer;
-const toCamelCase = str => str.replace(/(-|_)([a-z])/g, function (s) { return s[1].toUpperCase(); });
 
 /**
  * The api for all stores
@@ -42,7 +42,7 @@ export const use = function use(baseStoreName) {
     throw new ModuleNotFoundException(baseStoreName);
   }
 
-  baseStoreName = baseStoreName.replace(/-store$/, '');
+  baseStoreName = toCamelCase(baseStoreName.replace(/-store$/, ''));
 
   const { mapActions, mapGetters } = generateMappingFunction(baseStoreName);
   const addStore = generateAddStore(baseStoreName, loadedModule, importer);

@@ -1,3 +1,5 @@
+import { toCamelCase } from './helpers.js';
+
 /**
  * Private method that modifies magics strings to contain their parents
  */
@@ -28,11 +30,13 @@ export default function (store) {
   store.api = {};
   store.namespaced = true;
 
+  const camelCasedName = toCamelCase(store.name);
+
   // Clone getters
   if (store.getters) {
     store.api.get = {};
     Object.keys(store.getters).forEach((name) => {
-      store.api.get[name] = store.name + '/' + name;
+      store.api.get[name] = camelCasedName + '/' + name;
     });
   }
 
@@ -40,7 +44,7 @@ export default function (store) {
   if (store.actions) {
     store.api.act = {};
     Object.keys(store.actions).forEach((name) => {
-      store.api.act[name] = store.name + '/' + name;
+      store.api.act[name] = camelCasedName + '/' + name;
     });
   }
 
@@ -48,14 +52,14 @@ export default function (store) {
   if (store.mutations) {
     store.api.mutate = {};
     Object.keys(store.mutations).forEach((name) => {
-      store.api.mutate[name] = store.name + '/' + name;
+      store.api.mutate[name] = camelCasedName + '/' + name;
     });
   }
 
   // Clone modules
   if (store.modules) {
     Object.keys(store.modules).forEach((name) => {
-      store.api[name] = addModuleToNames(store.name, store.modules[name].api);
+      store.api[name] = addModuleToNames(camelCasedName, store.modules[name].api);
     });
   }
 
