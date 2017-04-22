@@ -9,6 +9,8 @@ var _keys = require('babel-runtime/core-js/object/keys');
 
 var _keys2 = _interopRequireDefault(_keys);
 
+var _helpers = require('./helpers.js');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var handlers = [];
@@ -34,8 +36,9 @@ var unregisterForHMR = exports.unregisterForHMR = function unregisterForHMR(newS
 var hmrHandler = exports.hmrHandler = function hmrHandler(updatedModules) {
   var modules = {};
   (0, _keys2.default)(updatedModules).forEach(function (key) {
+    var storeName = (0, _helpers.toCamelCase)(key.replace('-store', '')) + '-store';
     handlers.filter(function (handler) {
-      return handler.storeName === key;
+      return handler.storeName === storeName;
     }).forEach(function (handler) {
       modules[handler.storeInstanceName] = handler.newStore(updatedModules[key]);
     });

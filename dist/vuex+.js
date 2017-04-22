@@ -3,7 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.instance = exports.use = exports.api = exports.hmrCallback = exports.setup = exports.store = undefined;
+exports.instance = exports.use = exports.api = exports.hmrCallback = exports.store = undefined;
+
+var _webpackContextVuexHmr = require('webpack-context-vuex-hmr');
+
+var _webpackContextVuexHmr2 = _interopRequireDefault(_webpackContextVuexHmr);
 
 var _storeWrapper = require('./instanceHandling/storeWrapper.js');
 
@@ -23,28 +27,18 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var store = exports.store = _storeWrapper2.default;
 
-var setup = exports.setup = function setup(importer, vuexStore) {
-  instanceHandler.setup(importer);
-  (0, _hmrHandler.setStore)(vuexStore);
-};
-
 var hmrCallback = exports.hmrCallback = _hmrHandler.hmrHandler;
 
 var api = exports.api = instanceHandler.api;
 
 var use = exports.use = instanceHandler.use;
 
-function getLocalPath(path, context) {
-  var storeName = context.state['vuex+'].storeName;
-  var instance = context.state['vuex+'].instance;
-  return path.replace(storeName, (0, _helpers.getStoreInstanceName)(storeName, instance));
-}
 var instance = exports.instance = {
   get: function get(_ref) {
     var path = _ref.path,
         context = _ref.context;
 
-    var localPath = getLocalPath(path, context);
+    var localPath = (0, _helpers.getLocalPath)(path, context);
 
     return context.rootGetters[localPath];
   },
@@ -53,7 +47,7 @@ var instance = exports.instance = {
         data = _ref2.data,
         context = _ref2.context;
 
-    var localPath = getLocalPath(path, context);
+    var localPath = (0, _helpers.getLocalPath)(path, context);
 
     return context.dispatch(localPath, data, { root: true });
   },
@@ -62,8 +56,41 @@ var instance = exports.instance = {
         data = _ref3.data,
         context = _ref3.context;
 
-    var localPath = getLocalPath(path, context);
+    var localPath = (0, _helpers.getLocalPath)(path, context);
 
     return context.commit(localPath, data, { root: true });
+  }
+};
+
+var storeRegistered = false;
+exports.default = {
+  install: function install(Vue, options) {
+    Vue.mixin({
+      created: function created() {
+        var _this = this;
+
+        if (!storeRegistered && module.hot && this.$store) {
+          (0, _hmrHandler.setStore)(this.$store);
+          storeRegistered = true;
+        }
+        var importer = _webpackContextVuexHmr2.default.getNewInstance();
+        instanceHandler.setup(importer);
+
+        var findModuleName = function findModuleName(parent) {
+          if (!_this.storeInstanceName && parent.$parent) {
+            if (!parent.$parent.storeInstanceName) {
+              findModuleName(parent.$parent);
+            } else {
+              _this.storeInstanceName = parent.$parent.storeInstanceName;
+            }
+          }
+        };
+
+        findModuleName(this);
+
+        importer.getModules();
+        importer.setupHMR(_hmrHandler.hmrHandler);
+      }
+    });
   }
 };
