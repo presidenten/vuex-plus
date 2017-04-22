@@ -24,7 +24,8 @@
   },
   "homepage": "https://github.com/presidenten/vuex-plus#readme",
   "dependencies": {
-    "clone": "^2.1.1"
+    "clone": "^2.1.1",
+    "webpack-context-vuex-hmr": "^2.1.0"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",

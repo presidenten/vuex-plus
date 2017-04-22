@@ -1,3 +1,5 @@
+import { toCamelCase } from './helpers.js';
+
 let handlers = [];
 let store;
 export const setStore = (vuexStore) => {
@@ -19,8 +21,9 @@ export const unregisterForHMR = (newStore) => {
 export const hmrHandler = (updatedModules) => {
   const modules = {};
   Object.keys(updatedModules).forEach((key) => {
+    const storeName = toCamelCase(key.replace('-store', '')) + '-store';
     handlers
-      .filter(handler => handler.storeName === key)
+      .filter(handler => handler.storeName === storeName)
       .forEach((handler) => {
         modules[handler.storeInstanceName] = handler.newStore(updatedModules[key]);
       });

@@ -1,7 +1,9 @@
+import contextHmr from 'webpack-context-vuex-hmr';
+
 import storeWrapper from './instanceHandling/storeWrapper.js';
 import * as instanceHandler from './instanceHandling/use.js';
 import { hmrHandler, setStore } from './instanceHandling/hmrHandler.js';
-import { getStoreInstanceName } from './instanceHandling/helpers.js';
+import { getStoreInstanceName, getLocalPath } from './instanceHandling/helpers.js';
 
 
 /**
@@ -37,16 +39,7 @@ import { getStoreInstanceName } from './instanceHandling/helpers.js';
  */
 export const store = storeWrapper;
 
-/**
- * needed!
- */
-export const setup = (importer, vuexStore) => {
-  instanceHandler.setup(importer);
-  setStore(vuexStore);
-};
-
 export const hmrCallback = hmrHandler;
-
 
 /**
  * Global api with magical strings to all root modules
@@ -62,11 +55,6 @@ export const api = instanceHandler.api;
  */
 export const use = instanceHandler.use;
 
-function getLocalPath(path, context) {
-  const storeName = context.state['vuex+'].storeName;
-  const instance = context.state['vuex+'].instance;
-  return path.replace(storeName, getStoreInstanceName(storeName, instance));
-}
 /**
  * Method that returns a getter from the same instance.
  * @param {string} - Path as as string, usually from api. Eg. `api.example.get.something`
@@ -92,3 +80,34 @@ export const instance = {
     return context.commit(localPath, data, { root: true });
   },
 };
+
+let storeRegistered = false;
+export default {
+  install(Vue, options) {
+    Vue.mixin({
+      created() {
+        if(!storeRegistered && module.hot && this.$store) {
+          setStore(this.$store);
+          storeRegistered = true;
+        }
+        const importer = contextHmr.getNewInstance();
+        instanceHandler.setup(importer);
+
+        const findModuleName = (parent) => {
+          if (!this.storeInstanceName && parent.$parent) {
+            if (!parent.$parent.storeInstanceName) {
+              findModuleName(parent.$parent);
+            } else {
+              this.storeInstanceName = parent.$parent.storeInstanceName;
+            }
+          }
+        };
+
+        findModuleName(this);
+
+        importer.getModules();
+        importer.setupHMR(hmrHandler);
+      },
+    });
+  },
+}
