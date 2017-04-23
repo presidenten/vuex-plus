@@ -82,48 +82,35 @@ var storeWrapper = function (store) {
   return store;
 };
 
-/**
- * Methods to replace normal Vuex mapGetters & mapActions.
- * These mapping functions use the vuex+ global store api like so:
- * ```
- * computed: {
- *   ...mapGetters({
- *     something: api.example.get.something,
- *   }),
- * },
- * methods: {
- *   ...mapActions({
- *     doSomething: api.example.act.doSomething,
- *   }),
- * },
- * ```
- * @param {string} baseStoreName - The base store name, same as in `store({ name })`
- * @returns {Object} { mapGetters, mapActions }
- */
-var generateMappingFunction = function (baseStoreName) {
-  return {
-    mapGetters: function mapGetters(map) {
-      var result = {};
-      Object.keys(map).forEach(function (key) {
-        result[key] = function get() {
-          return this.$store.getters[map[key].replace(baseStoreName, this.storeInstanceName)];
-        };
-      });
-      return result;
-    },
+var handlers = [];
+var store$1;
+var setStore = function (vuexStore) {
+  store$1 = vuexStore;
+};
 
-    mapActions: function mapActions(map) {
-      var result = {};
-      Object.keys(map).forEach(function (key) {
-        result[key] = function dispatch(payload) {
-          return this.$store.dispatch(map[key].replace(baseStoreName, this.storeInstanceName),
-                                      payload);
-        };
-      });
-      return result;
-    },
+var registerForHMR = function (newStore, baseStoreName, storeInstanceName) {
+  handlers.push({
+    storeName: baseStoreName + '-store',
+    storeInstanceName: storeInstanceName,
+    newStore: newStore,
+  });
+};
 
-  };
+var unregisterForHMR = function (newStore) {
+  handlers = handlers.filter(function (h) { return h.newStore !== newStore; });
+};
+
+var hmrHandler = function (updatedModules) {
+  var modules = {};
+  Object.keys(updatedModules).forEach(function (key) {
+    var storeName = toCamelCase(key.replace('-store', '')) + '-store';
+    handlers
+      .filter(function (handler) { return handler.storeName === storeName; })
+      .forEach(function (handler) {
+        modules[handler.storeInstanceName] = handler.newStore(updatedModules[key]);
+      });
+    store$1.hotUpdate({ modules: modules });
+  });
 };
 
 /**
@@ -168,47 +155,23 @@ function newStore(storeInstanceName, instance, baseStoreName, store) {
   return resultingStore;
 }
 
-var handlers = [];
-var store$1;
-var setStore = function (vuexStore) {
-  store$1 = vuexStore;
-};
+var importer;
 
-var registerForHMR = function (newStore, baseStoreName, storeInstanceName) {
-  handlers.push({
-    storeName: baseStoreName + '-store',
-    storeInstanceName: storeInstanceName,
-    newStore: newStore,
-  });
-};
-
-var unregisterForHMR = function (newStore) {
-  handlers = handlers.filter(function (h) { return h.newStore !== newStore; });
-};
-
-var hmrHandler = function (updatedModules) {
-  var modules = {};
-  Object.keys(updatedModules).forEach(function (key) {
-    var storeName = toCamelCase(key.replace('-store', '')) + '-store';
-    handlers
-      .filter(function (handler) { return handler.storeName === storeName; })
-      .forEach(function (handler) {
-        modules[handler.storeInstanceName] = handler.newStore(updatedModules[key]);
-      });
-    store$1.hotUpdate({ modules: modules });
-  });
-};
+function setup(newImporter) {
+  importer = newImporter;
+}
 
 /**
  * Add a new store instance
  * The Vue component gets two props:
  * - instance {string}: Contains the instance name
  * - preserve {boolean}: If true, the store wont be discarded when the final instance is destroyed
- * @param {string} baseStoreName - The base store name, same as in `store({ name })`
+ * @param {string} baseStoreName - The base store name, same as the store filename
  * @param {Object} loadedModule - The loaded javascript module containing the Vuex module store
  * @returns {Object} Vue module mixin
  */
-var generateAddStore = function (baseStoreName, loadedModule) {
+function add(baseStoreName) {
+  var loadedModule = importer.getModules()[baseStoreName];
   var counter = {};
   function HmrHandler(instanceName, getNewInstanceStore) {
     return function (newLoadedModule) { return getNewInstanceStore(newLoadedModule); };
@@ -219,30 +182,34 @@ var generateAddStore = function (baseStoreName, loadedModule) {
     created: function created() {
       var this$1 = this;
 
-      this.storeInstanceName = getStoreInstanceName(baseStoreName, this.instance);
+      baseStoreName = toCamelCase(baseStoreName.replace(/-store$/, ''));
+      this['$vuex+'] = {
+        baseStoreName: baseStoreName,
+        storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
+      };
 
-      counter[this.storeInstanceName] = counter[this.storeInstanceName] || 0;
-      counter[this.storeInstanceName]++;
+      counter[this['$vuex+'].storeInstanceName] = counter[this['$vuex+'].storeInstanceName] || 0;
+      counter[this['$vuex+'].storeInstanceName]++;
 
-      var getNewInstanceStore = function (newLoadedModule) { return newStore(this$1.storeInstanceName, this$1.instance,
+      var getNewInstanceStore = function (newLoadedModule) { return newStore(this$1['$vuex+'].storeInstanceName, this$1.instance,
                                                               baseStoreName, newLoadedModule); };
 
       var store = getNewInstanceStore(loadedModule);
-      if (!this.$store._modules.root._children[this.storeInstanceName]) { // eslint-disable-line
-        this.$store.registerModule(this.storeInstanceName, store);
+      if (!this.$store._modules.root._children[this['$vuex+'].storeInstanceName]) { // eslint-disable-line
+        this.$store.registerModule(this['$vuex+'].storeInstanceName, store);
 
         if (module.hot) {
-          this.$hmrHandler = new HmrHandler(this.storeInstanceName, getNewInstanceStore);
-          registerForHMR(this.$hmrHandler, baseStoreName, this.storeInstanceName);
+          this.$hmrHandler = new HmrHandler(this['$vuex+'].storeInstanceName, getNewInstanceStore);
+          registerForHMR(this.$hmrHandler, baseStoreName, this['$vuex+'].storeInstanceName);
         }
       }
     },
 
     destroyed: function destroyed() {
-      counter[this.storeInstanceName]--;
+      counter[this['$vuex+'].storeInstanceName]--;
 
-      if (!this.preserve && counter[this.storeInstanceName] === 0) {
-        this.$store.unregisterModule(this.storeInstanceName);
+      if (!this.preserve && counter[this['$vuex+'].storeInstanceName] === 0) {
+        this.$store.unregisterModule(this['$vuex+'].storeInstanceName);
 
         if (module.hot) {
           unregisterForHMR(this.$hmrHandler);
@@ -250,39 +217,9 @@ var generateAddStore = function (baseStoreName, loadedModule) {
       }
     },
   };
-};
-
-function ModuleLoadException(storeInstanceName) {
-  this.message = 'No parent with store instance name ' + storeInstanceName + ' found';
-  this.name = 'ModuleLoadException';
 }
 
-/**
- * Use a store instance.
- * Usually used by submodules to specify that they are in the same instance as their parent
- * @returns {Object} Vue module mixin
- */
-var useStore = {
-  created: function created() {
-    var this$1 = this;
-
-    var findModuleName = function (parent) {
-      if (parent.$parent) {
-        if (!parent.$parent.storeInstanceName) {
-          findModuleName(parent.$parent);
-        } else {
-          this$1.storeInstanceName = parent.$parent.storeInstanceName;
-        }
-      } else {
-        throw new ModuleLoadException(this$1.storeInstanceName);
-      }
-    };
-
-    findModuleName(this);
-  },
-};
-
-var importer;
+var importer$1;
 
 /**
  * The api for all stores
@@ -296,46 +233,70 @@ var api$1 = {};
 /**
  * Set the importer that can read all stores via require.context
  */
-var setup = function (newImporter) {
-  importer = newImporter;
+var generateAPI = function (newImporter) {
+  importer$1 = newImporter;
 
-  var modules = importer.getModules();
+  var modules = importer$1.getModules();
   Object.keys(modules).forEach(function (module) {
     var camelCasedName = toCamelCase(modules[module].name);
     api$1[camelCasedName] = modules[module].api;
   });
 };
 
-function ModuleNotFoundException(baseStoreName) {
-  this.message = 'Module [' + baseStoreName + '] could not be loaded.';
-  this.name = 'ModuleNotFoundException';
-}
+var addStore = add;
 
-/**
- * Generate new component instance and return a mixin as well as functions
- * to map getters and actions to computed and methods.
- */
-var use$1 = function use(baseStoreName) {
-  var loadedModule = importer.getModules()[baseStoreName];
-  if (!loadedModule) {
-    throw new ModuleNotFoundException(baseStoreName);
+function searchDeeper(map, key) {
+  var submodules = Object.keys(map).filter(function (k) { return k !== 'get' && k !== 'act' && k !== 'mutate'; });
+  var keyIsInMap = submodules.indexOf(key) >= 0;
+
+  if (keyIsInMap) {
+    return map[key];
   }
 
-  baseStoreName = toCamelCase(baseStoreName.replace(/-store$/, ''));
+  // TODO Speed up with some nice algorithm
+  var result;
+  submodules.forEach(function (submodule) {
+    var searchResult = searchDeeper(map[submodule], key);
+    if (searchResult) {
+      result = searchResult;
+    }
+  });
 
-  var ref = generateMappingFunction(baseStoreName);
-  var mapActions = ref.mapActions;
-  var mapGetters = ref.mapGetters;
-  var addStore = generateAddStore(baseStoreName, loadedModule, importer);
+  return result;
+}
 
-  return {
-    mapActions: mapActions,
-    mapGetters: mapGetters,
-    mixins: {
-      addStore: addStore,
-      useStore: useStore,
-    },
-  };
+var map = {
+  getters: function getters(m) {
+    var result = {};
+    Object.keys(m).forEach(function (key) {
+      result[key] = function get() {
+        var getterKey = m[key].match(/[a-zA-Z]*/)[0];
+
+        var localApi = api$1[this['$vuex+'].baseStoreName];
+        if (getterKey !== this['$vuex+'].baseStoreName) {
+          localApi = searchDeeper(api$1[this['$vuex+'].baseStoreName], getterKey);
+        }
+        return this.$store.getters[localApi.get[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName)];
+      };
+    });
+    return result;
+  },
+
+  actions: function actions(m) {
+    var result = {};
+    Object.keys(m).forEach(function (key) {
+      result[key] = function dispatch(payload) {
+        var actionKey = m[key].match(/[a-zA-Z]*/)[0];
+
+        var localApi = api$1[this['$vuex+'].baseStoreName];
+        if (actionKey !== this['$vuex+'].baseStoreName) {
+          localApi = searchDeeper(api$1[this['$vuex+'].baseStoreName], actionKey);
+        }
+        return this.$store.dispatch(localApi.act[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName), payload);
+      };
+    });
+    return result;
+  },
 };
 
 /**
@@ -378,14 +339,6 @@ var hmrCallback = hmrHandler;
  * @returns {Object} - Object with magical strings
  */
 var api$$1 = api$1;
-
-/**
- * Method that defines which Vuex module store to use
- * @param {string} - Instance name as string, `example-sto
- * @returns {Object} - `{ mapActions, mapActions, mixins }` where `mixins`
- *                      contains `addStore` and `useStore`.
- */
-var use$$1 = use$1;
 
 /**
  * Method that returns a getter from the same instance.
@@ -434,6 +387,7 @@ var vuex_ = {
         if (!setupDone && this.$store) {
           setStore(this.$store);
           var importer = contextHmr.getNewInstance();
+          generateAPI(importer);
           setup(importer);
           importer.getModules();
           importer.setupHMR(hmrHandler);
@@ -441,19 +395,25 @@ var vuex_ = {
         }
 
         var findModuleName = function (parent) {
-          if (!this$1.storeInstanceName && parent.$parent) {
-            if (!parent.$parent.storeInstanceName) {
-              findModuleName(parent.$parent);
+          if (!this$1['$vuex+'] && parent.$parent) {
+            // console.info(parent.$parent.name, parent.$parent);
+            if (!parent.$parent['$vuex+']) {
+              findModuleName(parent.$parent, '/');
             } else {
-              this$1.storeInstanceName = parent.$parent.storeInstanceName;
+              // console.info('found [vuex+]', parent.$parent['$vuex+'].baseStoreName);
+              this$1['$vuex+'] = {
+                baseStoreName: parent.$parent['$vuex+'].baseStoreName,
+                storeInstanceName: parent.$parent['$vuex+'].storeInstanceName,
+              };
             }
           }
         };
 
-        findModuleName(this);
+        // console.info('finding', this.$options['_componentTag']);
+        findModuleName(this, '/');
       },
     });
   },
 };
 
-export { store, hmrCallback, api$$1 as api, use$$1 as use, instance };export default vuex_;
+export { addStore, map, store, hmrCallback, api$$1 as api, instance };export default vuex_;
