@@ -3,7 +3,7 @@ import contextHmr from 'webpack-context-vuex-hmr';
 import storeWrapper from './instanceHandling/storeWrapper.js';
 import * as instanceHandler from './instanceHandling/use.js';
 import { hmrHandler, setStore } from './instanceHandling/hmrHandler.js';
-import { getStoreInstanceName, getLocalPath } from './instanceHandling/helpers.js';
+import { getLocalPath } from './instanceHandling/helpers.js';
 
 
 /**
@@ -83,10 +83,10 @@ export const instance = {
 
 let setupDone = false;
 export default {
-  install(Vue, options) {
+  install(Vue) {
     Vue.mixin({
       created() {
-        if(!setupDone && this.$store) {
+        if (!setupDone && this.$store) {
           setStore(this.$store);
           const importer = contextHmr.getNewInstance();
           instanceHandler.setup(importer);
@@ -109,4 +109,4 @@ export default {
       },
     });
   },
-}
+};

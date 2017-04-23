@@ -19,7 +19,7 @@ export default function newStore(storeInstanceName, instance, baseStoreName, sto
     resultingStore.state = clone(store.state, false);
   }
   resultingStore.state['vuex+'] = {};
-  if(instance) {
+  if (instance) {
     resultingStore.state['vuex+'].instance = instance;
   }
   resultingStore.state['vuex+'].storeName = baseStoreName;

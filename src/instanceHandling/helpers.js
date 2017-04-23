@@ -1,5 +1,5 @@
 export const getStoreInstanceName = (storeName, instance) => {
-  if(instance) {
+  if (instance) {
     return storeName + '#' + instance;
   }
   return storeName;

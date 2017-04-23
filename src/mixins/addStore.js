@@ -7,7 +7,7 @@ import { registerForHMR, unregisterForHMR } from '../instanceHandling/hmrHandler
  * The Vue component gets two props:
  * - instance {string}: Contains the instance name
  * - preserve {boolean}: If true, the store wont be discarded when the final instance is destroyed
- * @param {string} baseStoreName - The base store name, same as in `store({ name })`
+ * @param {string} baseStoreName - The base store name, same as the store filename
  * @param {Object} loadedModule - The loaded javascript module containing the Vuex module store
  * @returns {Object} Vue module mixin
  */
