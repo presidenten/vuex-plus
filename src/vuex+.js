@@ -81,17 +81,19 @@ export const instance = {
   },
 };
 
-let storeRegistered = false;
+let setupDone = false;
 export default {
   install(Vue, options) {
     Vue.mixin({
       created() {
-        if(!storeRegistered && module.hot && this.$store) {
+        if(!setupDone && this.$store) {
           setStore(this.$store);
-          storeRegistered = true;
+          const importer = contextHmr.getNewInstance();
+          instanceHandler.setup(importer);
+          importer.getModules();
+          importer.setupHMR(hmrHandler);
+          setupDone = true;
         }
-        const importer = contextHmr.getNewInstance();
-        instanceHandler.setup(importer);
 
         const findModuleName = (parent) => {
           if (!this.storeInstanceName && parent.$parent) {
@@ -104,9 +106,6 @@ export default {
         };
 
         findModuleName(this);
-
-        importer.getModules();
-        importer.setupHMR(hmrHandler);
       },
     });
   },
