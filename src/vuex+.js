@@ -1,10 +1,66 @@
 import contextHmr from 'webpack-context-vuex-hmr';
 
 import storeWrapper from './instanceHandling/storeWrapper.js';
-import * as instanceHandler from './instanceHandling/use.js';
 import { hmrHandler, setStore } from './instanceHandling/hmrHandler.js';
 import { getLocalPath } from './instanceHandling/helpers.js';
+import { add, setup } from './instanceHandling/addStore.js';
+import * as apiManager from './instanceHandling/api.js';
 
+export const addStore = add;
+
+function searchDeeper(map, key) {
+  const submodules = Object.keys(map).filter(k => k !== 'get' && k !== 'act' && k !== 'mutate');
+  const keyIsInMap = submodules.indexOf(key) >= 0;
+
+  if (keyIsInMap) {
+    return map[key];
+  }
+
+  // TODO Speed up with some nice algorithm
+  let result;
+  submodules.forEach((submodule) => {
+    const searchResult = searchDeeper(map[submodule], key);
+    if (searchResult) {
+      result = searchResult;
+    }
+  });
+
+  return result;
+}
+
+export const map = {
+  getters(m) {
+    const result = {};
+    Object.keys(m).forEach((key) => {
+      result[key] = function get() {
+        const getterKey = m[key].match(/[a-zA-Z]*/)[0];
+
+        let localApi = apiManager.api[this['$vuex+'].baseStoreName];
+        if (getterKey !== this['$vuex+'].baseStoreName) {
+          localApi = searchDeeper(apiManager.api[this['$vuex+'].baseStoreName], getterKey);
+        }
+        return this.$store.getters[localApi.get[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName)];
+      };
+    });
+    return result;
+  },
+
+  actions(m) {
+    const result = {};
+    Object.keys(m).forEach((key) => {
+      result[key] = function dispatch(payload) {
+        const actionKey = m[key].match(/[a-zA-Z]*/)[0];
+
+        let localApi = apiManager.api[this['$vuex+'].baseStoreName];
+        if (actionKey !== this['$vuex+'].baseStoreName) {
+          localApi = searchDeeper(apiManager.api[this['$vuex+'].baseStoreName], actionKey);
+        }
+        return this.$store.dispatch(localApi.act[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName), payload);
+      };
+    });
+    return result;
+  },
+};
 
 /**
  * Modify Vuex Module to contain an api with magic strings
@@ -45,15 +101,7 @@ export const hmrCallback = hmrHandler;
  * Global api with magical strings to all root modules
  * @returns {Object} - Object with magical strings
  */
-export const api = instanceHandler.api;
-
-/**
- * Method that defines which Vuex module store to use
- * @param {string} - Instance name as string, `example-sto
- * @returns {Object} - `{ mapActions, mapActions, mixins }` where `mixins`
- *                      contains `addStore` and `useStore`.
- */
-export const use = instanceHandler.use;
+export const api = apiManager.api;
 
 /**
  * Method that returns a getter from the same instance.
@@ -89,23 +137,30 @@ export default {
         if (!setupDone && this.$store) {
           setStore(this.$store);
           const importer = contextHmr.getNewInstance();
-          instanceHandler.setup(importer);
+          apiManager.generateAPI(importer);
+          setup(importer);
           importer.getModules();
           importer.setupHMR(hmrHandler);
           setupDone = true;
         }
 
         const findModuleName = (parent) => {
-          if (!this.storeInstanceName && parent.$parent) {
-            if (!parent.$parent.storeInstanceName) {
-              findModuleName(parent.$parent);
+          if (!this['$vuex+'] && parent.$parent) {
+            // console.info(parent.$parent.name, parent.$parent);
+            if (!parent.$parent['$vuex+']) {
+              findModuleName(parent.$parent, '/');
             } else {
-              this.storeInstanceName = parent.$parent.storeInstanceName;
+              // console.info('found [vuex+]', parent.$parent['$vuex+'].baseStoreName);
+              this['$vuex+'] = {
+                baseStoreName: parent.$parent['$vuex+'].baseStoreName,
+                storeInstanceName: parent.$parent['$vuex+'].storeInstanceName,
+              };
             }
           }
         };
 
-        findModuleName(this);
+        // console.info('finding', this.$options['_componentTag']);
+        findModuleName(this, '/');
       },
     });
   },

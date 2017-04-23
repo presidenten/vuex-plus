@@ -1,13 +1,13 @@
 {
   "name": "vuex-plus",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Opinionated library that handles module instances in Vuex",
   "main": "dist/vuex+.js",
   "scripts": {
-    "prebuild": "npm run eslint",
+    "prebuild": "npm run lint",
     "build": "rollup -c rollup.config.js",
     "postbuild": "echo \"Done!\"",
-    "eslint": "eslint src & eslint loader.js",
+    "lint": "eslint src & eslint loader.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
