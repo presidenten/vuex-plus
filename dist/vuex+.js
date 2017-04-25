@@ -19,18 +19,14 @@ var getLocalPath = function (path, context) {
 /**
  * Private method that modifies magics strings to contain their parents
  */
-function addModuleToNames(name, subapi, instanceName) {
+function addModuleToNames(name, subapi) {
   var result = {};
   Object.keys(subapi).forEach(function (type) {
     if (type === 'get' || type === 'act' || type === 'mutate') {
       result[type] = {};
       Object.keys(subapi[type]).forEach(function (pathName) {
         var path = subapi[type][pathName];
-        var subname = path.match(/[a-zA-Z]*/)[0];
         result[type][pathName] = name + '/' + path;
-        if (instanceName) {
-          result[type][pathName] = result[type][pathName].replace(subname, subname + '$' + instanceName);
-        }
       });
     } else {
       result[type] = addModuleToNames(name, subapi[type]);
@@ -78,12 +74,11 @@ var storeWrapper = function (store) {
   // Clone modules
   if (store.modules) {
     Object.keys(store.modules).forEach(function (name) {
-      var hashPos = name.indexOf('$');
-      var instanceName = hashPos >= 0 ? name.slice(hashPos + 1) : undefined;
-
-      store.api[name] = addModuleToNames(camelCasedName, store.modules[name].api, instanceName);
+      store.api[name] = addModuleToNames(camelCasedName, store.modules[name].api);
     });
   }
+
+  store.$api = clone(store.api, false);
 
   return store;
 };
@@ -241,11 +236,10 @@ var api$1 = {};
  */
 var generateAPI = function (newImporter) {
   importer$1 = newImporter;
-
   var modules = importer$1.getModules();
   Object.keys(modules).forEach(function (module) {
     var camelCasedName = toCamelCase(modules[module].name);
-    api$1[camelCasedName] = modules[module].api;
+    api$1[camelCasedName] = modules[module].$api;
   });
 };
 
@@ -271,17 +265,26 @@ function searchDeeper(map, key) {
   return result;
 }
 
-function getFullPath(config) {
-  var suffix = config.subinstance ? '$' + config.subinstance : '';
-  var getterKey = config.mappedKey.match(/[a-zA-Z]*/)[0];
-
+var getFullPath = function (config) {
+  var suffix = config.instance ? '$' + config.instance : '';
+  var getterKey = config.subpath.match(/[a-zA-Z]*/)[0];
   var localApi = api$1[config.vuexPlus.baseStoreName];
+
   if (getterKey !== config.vuexPlus.baseStoreName) {
     localApi = searchDeeper(api$1[config.vuexPlus.baseStoreName], getterKey + suffix);
   }
-  return localApi[config.method][config.key]
-            .replace(config.vuexPlus.baseStoreName, config.vuexPlus.storeInstanceName);
-}
+
+  if (!localApi) {
+    var instance = config.subpath.split('/')[0] + '$' + config.instance;
+    console.error('[Vuex+ warn]: Cant find substore instance "' + instance + '" in "' + config.container + '"');
+    return undefined;
+  }
+
+  var fullPath = localApi[config.method][config.key]
+                     .replace(config.vuexPlus.baseStoreName, config.vuexPlus.storeInstanceName);
+
+  return fullPath;
+};
 
 var map = {
   getters: function getters(m) {
@@ -291,12 +294,12 @@ var map = {
         var path = getFullPath({
           method: 'get',
           key: key,
-          mappedKey: m[key],
-          subinstance: this.subinstance,
+          subpath: m[key],
+          instance: this.instance,
           vuexPlus: this['$vuex+'],
+          container: this.$parent.$vnode.componentOptions.tag,
         });
 
-        // localApi.get[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName)
         return this.$store.getters[path];
       };
     });
@@ -310,10 +313,12 @@ var map = {
         var path = getFullPath({
           method: 'act',
           key: key,
-          mappedKey: m[key],
-          subinstance: this.subinstance,
+          subpath: m[key],
+          instance: this.instance,
           vuexPlus: this['$vuex+'],
+          container: this.$parent.$vnode.componentOptions.tag,
         });
+
         return this.$store.dispatch(path, payload);
       };
     });
@@ -362,13 +367,26 @@ var hmrCallback = hmrHandler;
  */
 var api$$1 = api$1;
 
+var newInstance = function newInstance(substore, instance) {
+  var result = clone(substore);
+  Object.keys(result.api).forEach(function (type) {
+    if (type === 'get' || type === 'act' || type === 'mutate') {
+      Object.keys(result.api[type]).forEach(function (key) {
+        result.api[type][key] = result.api[type][key].split('/')[0] + '$' + instance + '/' + key;
+      });
+    }
+  });
+
+  return result;
+};
+
 /**
  * Method that returns a getter from the same instance.
  * @param {string} - Path as as string, usually from api. Eg. `api.example.get.something`
  * @param {Context} - Vuex context
  * @returns {any} - Value from Vuex getter
  */
-var instance = {
+var global = {
   get: function get(ref) {
     var path = ref.path;
     var context = ref.context;
@@ -403,6 +421,7 @@ var setupDone = false;
 var vuex_ = {
   install: function install(Vue) {
     Vue.mixin({
+      props: ['instance'],
       created: function created() {
         var this$1 = this;
 
@@ -418,11 +437,9 @@ var vuex_ = {
 
         var findModuleName = function (parent) {
           if (!this$1['$vuex+'] && parent.$parent) {
-            // console.info(parent.$parent.name, parent.$parent);
             if (!parent.$parent['$vuex+']) {
               findModuleName(parent.$parent, '/');
             } else {
-              // console.info('found [vuex+]', parent.$parent['$vuex+'].baseStoreName);
               this$1['$vuex+'] = {
                 baseStoreName: parent.$parent['$vuex+'].baseStoreName,
                 storeInstanceName: parent.$parent['$vuex+'].storeInstanceName,
@@ -431,11 +448,10 @@ var vuex_ = {
           }
         };
 
-        // console.info('finding', this.$options['_componentTag']);
         findModuleName(this, '/');
       },
     });
   },
 };
 
-export { addStore, map, store, hmrCallback, api$$1 as api, instance };export default vuex_;
+export { addStore, map, store, hmrCallback, api$$1 as api, newInstance, global };export default vuex_;

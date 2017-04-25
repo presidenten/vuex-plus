@@ -16,10 +16,9 @@ export const api = {};
  */
 export const generateAPI = (newImporter) => {
   importer = newImporter;
-
   const modules = importer.getModules();
   Object.keys(modules).forEach((module) => {
     const camelCasedName = toCamelCase(modules[module].name);
-    api[camelCasedName] = modules[module].api;
+    api[camelCasedName] = modules[module].$api;
   });
 };

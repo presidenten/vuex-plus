@@ -1,4 +1,5 @@
 import contextHmr from 'webpack-context-vuex-hmr';
+import clone from 'clone';
 
 import storeWrapper from './instanceHandling/storeWrapper.js';
 import { hmrHandler, setStore } from './instanceHandling/hmrHandler.js';
@@ -28,17 +29,26 @@ function searchDeeper(map, key) {
   return result;
 }
 
-function getFullPath(config) {
-  const suffix = config.subinstance ? '$' + config.subinstance : '';
-  const getterKey = config.mappedKey.match(/[a-zA-Z]*/)[0];
-
+const getFullPath = (config) => {
+  const suffix = config.instance ? '$' + config.instance : '';
+  const getterKey = config.subpath.match(/[a-zA-Z]*/)[0];
   let localApi = apiManager.api[config.vuexPlus.baseStoreName];
+
   if (getterKey !== config.vuexPlus.baseStoreName) {
     localApi = searchDeeper(apiManager.api[config.vuexPlus.baseStoreName], getterKey + suffix);
   }
-  return localApi[config.method][config.key]
-            .replace(config.vuexPlus.baseStoreName, config.vuexPlus.storeInstanceName);
-}
+
+  if (!localApi) {
+    const instance = config.subpath.split('/')[0] + '$' + config.instance;
+    console.error('[Vuex+ warn]: Cant find substore instance "' + instance + '" in "' + config.container + '"');
+    return undefined;
+  }
+
+  const fullPath = localApi[config.method][config.key]
+                     .replace(config.vuexPlus.baseStoreName, config.vuexPlus.storeInstanceName);
+
+  return fullPath;
+};
 
 export const map = {
   getters(m) {
@@ -48,12 +58,12 @@ export const map = {
         const path = getFullPath({
           method: 'get',
           key,
-          mappedKey: m[key],
-          subinstance: this.subinstance,
+          subpath: m[key],
+          instance: this.instance,
           vuexPlus: this['$vuex+'],
+          container: this.$parent.$vnode.componentOptions.tag,
         });
 
-        // localApi.get[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName)
         return this.$store.getters[path];
       };
     });
@@ -67,10 +77,12 @@ export const map = {
         const path = getFullPath({
           method: 'act',
           key,
-          mappedKey: m[key],
-          subinstance: this.subinstance,
+          subpath: m[key],
+          instance: this.instance,
           vuexPlus: this['$vuex+'],
+          container: this.$parent.$vnode.componentOptions.tag,
         });
+
         return this.$store.dispatch(path, payload);
       };
     });
@@ -119,13 +131,26 @@ export const hmrCallback = hmrHandler;
  */
 export const api = apiManager.api;
 
+export const newInstance = function newInstance(substore, instance) {
+  const result = clone(substore);
+  Object.keys(result.api).forEach((type) => {
+    if (type === 'get' || type === 'act' || type === 'mutate') {
+      Object.keys(result.api[type]).forEach((key) => {
+        result.api[type][key] = result.api[type][key].split('/')[0] + '$' + instance + '/' + key;
+      });
+    }
+  });
+
+  return result;
+};
+
 /**
  * Method that returns a getter from the same instance.
  * @param {string} - Path as as string, usually from api. Eg. `api.example.get.something`
  * @param {Context} - Vuex context
  * @returns {any} - Value from Vuex getter
  */
-export const instance = {
+export const global = {
   get({ path, context }) {
     const localPath = getLocalPath(path, context);
 
@@ -149,6 +174,7 @@ let setupDone = false;
 export default {
   install(Vue) {
     Vue.mixin({
+      props: ['instance'],
       created() {
         if (!setupDone && this.$store) {
           setStore(this.$store);
@@ -162,11 +188,9 @@ export default {
 
         const findModuleName = (parent) => {
           if (!this['$vuex+'] && parent.$parent) {
-            // console.info(parent.$parent.name, parent.$parent);
             if (!parent.$parent['$vuex+']) {
               findModuleName(parent.$parent, '/');
             } else {
-              // console.info('found [vuex+]', parent.$parent['$vuex+'].baseStoreName);
               this['$vuex+'] = {
                 baseStoreName: parent.$parent['$vuex+'].baseStoreName,
                 storeInstanceName: parent.$parent['$vuex+'].storeInstanceName,
@@ -175,7 +199,6 @@ export default {
           }
         };
 
-        // console.info('finding', this.$options['_componentTag']);
         findModuleName(this, '/');
       },
     });

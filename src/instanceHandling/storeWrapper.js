@@ -1,20 +1,17 @@
+import clone from 'clone';
 import { toCamelCase } from './helpers.js';
 
 /**
  * Private method that modifies magics strings to contain their parents
  */
-function addModuleToNames(name, subapi, instanceName) {
+function addModuleToNames(name, subapi) {
   const result = {};
   Object.keys(subapi).forEach((type) => {
     if (type === 'get' || type === 'act' || type === 'mutate') {
       result[type] = {};
       Object.keys(subapi[type]).forEach((pathName) => {
         const path = subapi[type][pathName];
-        const subname = path.match(/[a-zA-Z]*/)[0];
         result[type][pathName] = name + '/' + path;
-        if (instanceName) {
-          result[type][pathName] = result[type][pathName].replace(subname, subname + '$' + instanceName);
-        }
       });
     } else {
       result[type] = addModuleToNames(name, subapi[type]);
@@ -62,12 +59,11 @@ export default function (store) {
   // Clone modules
   if (store.modules) {
     Object.keys(store.modules).forEach((name) => {
-      const hashPos = name.indexOf('$');
-      const instanceName = hashPos >= 0 ? name.slice(hashPos + 1) : undefined;
-
-      store.api[name] = addModuleToNames(camelCasedName, store.modules[name].api, instanceName);
+      store.api[name] = addModuleToNames(camelCasedName, store.modules[name].api);
     });
   }
+
+  store.$api = clone(store.api, false);
 
   return store;
 }

@@ -5,5 +5,6 @@ module.exports = {
   entry: 'src/vuex+.js',
   dest: 'dist/vuex+.js',
   format: 'es',
-  plugins: [ buble() ],
+  plugins: [buble()],
+  external: ['webpack-context-vuex-hmr', 'clone'],
 };
