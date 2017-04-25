@@ -8,7 +8,7 @@ import * as apiManager from './instanceHandling/api.js';
 
 export const addStore = add;
 
-function searchDeeper(map, key) {
+function searchDeeper(map, key, log) {
   const submodules = Object.keys(map).filter(k => k !== 'get' && k !== 'act' && k !== 'mutate');
   const keyIsInMap = submodules.indexOf(key) >= 0;
 
@@ -28,18 +28,32 @@ function searchDeeper(map, key) {
   return result;
 }
 
+function getFullPath(config) {
+  const suffix = config.subinstance ? '#' + config.subinstance : '';
+  const getterKey = config.mappedKey.match(/[a-zA-Z]*/)[0];
+
+  let localApi = apiManager.api[config.vuexPlus.baseStoreName];
+  if (getterKey !== config.vuexPlus.baseStoreName) {
+    localApi = searchDeeper(apiManager.api[config.vuexPlus.baseStoreName], getterKey + suffix);
+  }
+  return localApi[config.method][config.key].replace(config.vuexPlus.baseStoreName, config.vuexPlus.storeInstanceName);
+}
+
 export const map = {
   getters(m) {
     const result = {};
     Object.keys(m).forEach((key) => {
       result[key] = function get() {
-        const getterKey = m[key].match(/[a-zA-Z]*/)[0];
+        const path = getFullPath({
+            method: 'get',
+            key,
+            mappedKey: m[key],
+            subinstance: this.subinstance,
+            vuexPlus: this['$vuex+']
+        });
 
-        let localApi = apiManager.api[this['$vuex+'].baseStoreName];
-        if (getterKey !== this['$vuex+'].baseStoreName) {
-          localApi = searchDeeper(apiManager.api[this['$vuex+'].baseStoreName], getterKey);
-        }
-        return this.$store.getters[localApi.get[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName)];
+        // localApi.get[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName)
+        return this.$store.getters[path];
       };
     });
     return result;
@@ -49,13 +63,14 @@ export const map = {
     const result = {};
     Object.keys(m).forEach((key) => {
       result[key] = function dispatch(payload) {
-        const actionKey = m[key].match(/[a-zA-Z]*/)[0];
-
-        let localApi = apiManager.api[this['$vuex+'].baseStoreName];
-        if (actionKey !== this['$vuex+'].baseStoreName) {
-          localApi = searchDeeper(apiManager.api[this['$vuex+'].baseStoreName], actionKey);
-        }
-        return this.$store.dispatch(localApi.act[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName), payload);
+        const path = getFullPath({
+            method: 'act',
+            key,
+            mappedKey: m[key],
+            subinstance: this.subinstance,
+            vuexPlus: this['$vuex+']
+        });
+        return this.$store.dispatch(path, payload);
       };
     });
     return result;
