@@ -169,7 +169,7 @@ function setup(newImporter) {
  * - preserve {boolean}: If true, the store wont be discarded when the final instance is destroyed
  * @param {string} baseStoreName - The base store name, same as the store filename
  * @param {Object} loadedModule - The loaded javascript module containing the Vuex module store
- * @returns {storeApi, mixin} api for the loaded module and a mixin
+ * @returns {mixin, api} api for the loaded module and a mixin
  */
 function add(baseStoreName) {
   var loadedModule = importer.getModules()[baseStoreName];
@@ -179,7 +179,7 @@ function add(baseStoreName) {
   }
 
   return {
-    storeApi: loadedModule.api,
+    api: loadedModule.api,
     mixin: {
       props: ['instance', 'preserve'],
       created: function created() {
@@ -232,7 +232,7 @@ var importer$1;
  *   api.aStore.get.something => vuex magic string for vuex getter
  * ```
  */
-var api$1 = {};
+var api = {};
 
 /**
  * Set the importer that can read all stores via require.context
@@ -242,7 +242,7 @@ var generateAPI = function (newImporter) {
   var modules = importer$1.getModules();
   Object.keys(modules).forEach(function (module) {
     var camelCasedName = toCamelCase(modules[module].name);
-    api$1[camelCasedName] = modules[module].$api;
+    api[camelCasedName] = modules[module].$api;
   });
 };
 
@@ -271,10 +271,10 @@ function searchDeeper(map, key) {
 var getFullPath = function (config) {
   var suffix = config.instance ? '$' + config.instance : '';
   var getterKey = config.subpath.match(/[a-zA-Z]*/)[0];
-  var localApi = api$1[config.vuexPlus.baseStoreName];
+  var localApi = api[config.vuexPlus.baseStoreName];
 
   if (getterKey !== config.vuexPlus.baseStoreName) {
-    localApi = searchDeeper(api$1[config.vuexPlus.baseStoreName], getterKey + suffix);
+    localApi = searchDeeper(api[config.vuexPlus.baseStoreName], getterKey + suffix);
   }
 
   if (!localApi) {
@@ -364,12 +364,6 @@ var store = storeWrapper;
 
 var hmrCallback = hmrHandler;
 
-/**
- * Global api with magical strings to all root modules
- * @returns {Object} - Object with magical strings
- */
-var api$$1 = api$1;
-
 var newInstance = function newInstance(substore, instance) {
   var result = clone(substore);
   Object.keys(result.api).forEach(function (type) {
@@ -390,6 +384,8 @@ var newInstance = function newInstance(substore, instance) {
  * @returns {any} - Value from Vuex getter
  */
 var global = {
+  api: api,
+
   get: function get(ref) {
     var path = ref.path;
     var context = ref.context;
@@ -457,4 +453,4 @@ var vuex_ = {
   },
 };
 
-export { addStore, map, store, hmrCallback, api$$1 as api, newInstance, global };export default vuex_;
+export { addStore, map, store, hmrCallback, newInstance, global };export default vuex_;
