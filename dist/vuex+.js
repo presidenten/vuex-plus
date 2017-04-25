@@ -19,14 +19,18 @@ var getLocalPath = function (path, context) {
 /**
  * Private method that modifies magics strings to contain their parents
  */
-function addModuleToNames(name, subapi) {
+function addModuleToNames(name, subapi, instanceName) {
   var result = {};
   Object.keys(subapi).forEach(function (type) {
     if (type === 'get' || type === 'act' || type === 'mutate') {
       result[type] = {};
       Object.keys(subapi[type]).forEach(function (pathName) {
         var path = subapi[type][pathName];
+        var subname = path.match(/[a-zA-Z]*/)[0];
         result[type][pathName] = name + '/' + path;
+        if(instanceName) {
+          result[type][pathName] = result[type][pathName].replace(subname, subname + '#' + instanceName);
+        }
       });
     } else {
       result[type] = addModuleToNames(name, subapi[type]);
@@ -34,7 +38,6 @@ function addModuleToNames(name, subapi) {
   });
   return result;
 }
-
 
 /**
  * Modify Vuex Module to contain an api with magic strings
@@ -75,7 +78,10 @@ var storeWrapper = function (store) {
   // Clone modules
   if (store.modules) {
     Object.keys(store.modules).forEach(function (name) {
-      store.api[name] = addModuleToNames(camelCasedName, store.modules[name].api);
+      var hashPos = name.indexOf('#');
+      var instanceName = hashPos >= 0 ? name.slice(hashPos + 1) : undefined;
+
+      store.api[name] = addModuleToNames(camelCasedName, store.modules[name].api, instanceName);
     });
   }
 
@@ -245,7 +251,7 @@ var generateAPI = function (newImporter) {
 
 var addStore = add;
 
-function searchDeeper(map, key) {
+function searchDeeper(map, key, log) {
   var submodules = Object.keys(map).filter(function (k) { return k !== 'get' && k !== 'act' && k !== 'mutate'; });
   var keyIsInMap = submodules.indexOf(key) >= 0;
 
@@ -265,18 +271,32 @@ function searchDeeper(map, key) {
   return result;
 }
 
+function getFullPath(config) {
+  var suffix = config.subinstance ? '#' + config.subinstance : '';
+  var getterKey = config.mappedKey.match(/[a-zA-Z]*/)[0];
+
+  var localApi = api$1[config.vuexPlus.baseStoreName];
+  if (getterKey !== config.vuexPlus.baseStoreName) {
+    localApi = searchDeeper(api$1[config.vuexPlus.baseStoreName], getterKey + suffix);
+  }
+  return localApi[config.method][config.key].replace(config.vuexPlus.baseStoreName, config.vuexPlus.storeInstanceName);
+}
+
 var map = {
   getters: function getters(m) {
     var result = {};
     Object.keys(m).forEach(function (key) {
       result[key] = function get() {
-        var getterKey = m[key].match(/[a-zA-Z]*/)[0];
+        var path = getFullPath({
+            method: 'get',
+            key: key,
+            mappedKey: m[key],
+            subinstance: this.subinstance,
+            vuexPlus: this['$vuex+']
+        });
 
-        var localApi = api$1[this['$vuex+'].baseStoreName];
-        if (getterKey !== this['$vuex+'].baseStoreName) {
-          localApi = searchDeeper(api$1[this['$vuex+'].baseStoreName], getterKey);
-        }
-        return this.$store.getters[localApi.get[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName)];
+        // localApi.get[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName)
+        return this.$store.getters[path];
       };
     });
     return result;
@@ -286,13 +306,14 @@ var map = {
     var result = {};
     Object.keys(m).forEach(function (key) {
       result[key] = function dispatch(payload) {
-        var actionKey = m[key].match(/[a-zA-Z]*/)[0];
-
-        var localApi = api$1[this['$vuex+'].baseStoreName];
-        if (actionKey !== this['$vuex+'].baseStoreName) {
-          localApi = searchDeeper(api$1[this['$vuex+'].baseStoreName], actionKey);
-        }
-        return this.$store.dispatch(localApi.act[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName), payload);
+        var path = getFullPath({
+            method: 'act',
+            key: key,
+            mappedKey: m[key],
+            subinstance: this.subinstance,
+            vuexPlus: this['$vuex+']
+        });
+        return this.$store.dispatch(path, payload);
       };
     });
     return result;

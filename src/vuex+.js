@@ -8,7 +8,7 @@ import * as apiManager from './instanceHandling/api.js';
 
 export const addStore = add;
 
-function searchDeeper(map, key, log) {
+function searchDeeper(map, key) {
   const submodules = Object.keys(map).filter(k => k !== 'get' && k !== 'act' && k !== 'mutate');
   const keyIsInMap = submodules.indexOf(key) >= 0;
 
@@ -28,7 +28,7 @@ function searchDeeper(map, key, log) {
   return result;
 }
 
-function getFullPath(config) {
+function getFullPath(config) {
   const suffix = config.subinstance ? '#' + config.subinstance : '';
   const getterKey = config.mappedKey.match(/[a-zA-Z]*/)[0];
 
@@ -36,7 +36,8 @@ function getFullPath(config) {
   if (getterKey !== config.vuexPlus.baseStoreName) {
     localApi = searchDeeper(apiManager.api[config.vuexPlus.baseStoreName], getterKey + suffix);
   }
-  return localApi[config.method][config.key].replace(config.vuexPlus.baseStoreName, config.vuexPlus.storeInstanceName);
+  return localApi[config.method][config.key]
+            .replace(config.vuexPlus.baseStoreName, config.vuexPlus.storeInstanceName);
 }
 
 export const map = {
@@ -45,11 +46,11 @@ export const map = {
     Object.keys(m).forEach((key) => {
       result[key] = function get() {
         const path = getFullPath({
-            method: 'get',
-            key,
-            mappedKey: m[key],
-            subinstance: this.subinstance,
-            vuexPlus: this['$vuex+']
+          method: 'get',
+          key,
+          mappedKey: m[key],
+          subinstance: this.subinstance,
+          vuexPlus: this['$vuex+'],
         });
 
         // localApi.get[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName)
@@ -64,11 +65,11 @@ export const map = {
     Object.keys(m).forEach((key) => {
       result[key] = function dispatch(payload) {
         const path = getFullPath({
-            method: 'act',
-            key,
-            mappedKey: m[key],
-            subinstance: this.subinstance,
-            vuexPlus: this['$vuex+']
+          method: 'act',
+          key,
+          mappedKey: m[key],
+          subinstance: this.subinstance,
+          vuexPlus: this['$vuex+'],
         });
         return this.$store.dispatch(path, payload);
       };

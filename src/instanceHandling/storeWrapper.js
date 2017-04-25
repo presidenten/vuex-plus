@@ -12,8 +12,8 @@ function addModuleToNames(name, subapi, instanceName) {
         const path = subapi[type][pathName];
         const subname = path.match(/[a-zA-Z]*/)[0];
         result[type][pathName] = name + '/' + path;
-        if(instanceName) {
-          result[type][pathName] = result[type][pathName].replace(subname, subname + '#' + instanceName)
+        if (instanceName) {
+          result[type][pathName] = result[type][pathName].replace(subname, subname + '#' + instanceName);
         }
       });
     } else {
