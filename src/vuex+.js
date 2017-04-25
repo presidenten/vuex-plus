@@ -125,12 +125,6 @@ export const store = storeWrapper;
 
 export const hmrCallback = hmrHandler;
 
-/**
- * Global api with magical strings to all root modules
- * @returns {Object} - Object with magical strings
- */
-export const api = apiManager.api;
-
 export const newInstance = function newInstance(substore, instance) {
   const result = clone(substore);
   Object.keys(result.api).forEach((type) => {
@@ -151,6 +145,8 @@ export const newInstance = function newInstance(substore, instance) {
  * @returns {any} - Value from Vuex getter
  */
 export const global = {
+  api: apiManager.api,
+
   get({ path, context }) {
     const localPath = getLocalPath(path, context);
 

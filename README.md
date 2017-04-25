@@ -27,6 +27,11 @@ Enhancements:
 Check out the extensive tutorial bundled with the example:
 [https://github.com/presidenten/vuex-plus-demo](https://github.com/presidenten/vuex-plus-demo)
 
+### Todo
+- Clean up code
+- Clean up comments
+- Write tests
+
 ### Contributers
 - [Zyrica](https://github.com/zyrica)
 
