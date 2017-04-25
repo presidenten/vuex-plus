@@ -13,7 +13,7 @@ function addModuleToNames(name, subapi, instanceName) {
         const subname = path.match(/[a-zA-Z]*/)[0];
         result[type][pathName] = name + '/' + path;
         if (instanceName) {
-          result[type][pathName] = result[type][pathName].replace(subname, subname + '#' + instanceName);
+          result[type][pathName] = result[type][pathName].replace(subname, subname + '$' + instanceName);
         }
       });
     } else {
@@ -62,7 +62,7 @@ export default function (store) {
   // Clone modules
   if (store.modules) {
     Object.keys(store.modules).forEach((name) => {
-      const hashPos = name.indexOf('#');
+      const hashPos = name.indexOf('$');
       const instanceName = hashPos >= 0 ? name.slice(hashPos + 1) : undefined;
 
       store.api[name] = addModuleToNames(camelCasedName, store.modules[name].api, instanceName);

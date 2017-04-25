@@ -29,7 +29,7 @@ function searchDeeper(map, key) {
 }
 
 function getFullPath(config) {
-  const suffix = config.subinstance ? '#' + config.subinstance : '';
+  const suffix = config.subinstance ? '$' + config.subinstance : '';
   const getterKey = config.mappedKey.match(/[a-zA-Z]*/)[0];
 
   let localApi = apiManager.api[config.vuexPlus.baseStoreName];

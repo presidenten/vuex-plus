@@ -3,7 +3,7 @@ import clone from 'clone';
 
 var getStoreInstanceName = function (storeName, instance) {
   if (instance) {
-    return storeName + '#' + instance;
+    return storeName + '$' + instance;
   }
   return storeName;
 };
@@ -28,8 +28,8 @@ function addModuleToNames(name, subapi, instanceName) {
         var path = subapi[type][pathName];
         var subname = path.match(/[a-zA-Z]*/)[0];
         result[type][pathName] = name + '/' + path;
-        if(instanceName) {
-          result[type][pathName] = result[type][pathName].replace(subname, subname + '#' + instanceName);
+        if (instanceName) {
+          result[type][pathName] = result[type][pathName].replace(subname, subname + '$' + instanceName);
         }
       });
     } else {
@@ -78,7 +78,7 @@ var storeWrapper = function (store) {
   // Clone modules
   if (store.modules) {
     Object.keys(store.modules).forEach(function (name) {
-      var hashPos = name.indexOf('#');
+      var hashPos = name.indexOf('$');
       var instanceName = hashPos >= 0 ? name.slice(hashPos + 1) : undefined;
 
       store.api[name] = addModuleToNames(camelCasedName, store.modules[name].api, instanceName);
@@ -251,7 +251,7 @@ var generateAPI = function (newImporter) {
 
 var addStore = add;
 
-function searchDeeper(map, key, log) {
+function searchDeeper(map, key) {
   var submodules = Object.keys(map).filter(function (k) { return k !== 'get' && k !== 'act' && k !== 'mutate'; });
   var keyIsInMap = submodules.indexOf(key) >= 0;
 
@@ -271,15 +271,16 @@ function searchDeeper(map, key, log) {
   return result;
 }
 
-function getFullPath(config) {
-  var suffix = config.subinstance ? '#' + config.subinstance : '';
+function getFullPath(config) {
+  var suffix = config.subinstance ? '$' + config.subinstance : '';
   var getterKey = config.mappedKey.match(/[a-zA-Z]*/)[0];
 
   var localApi = api$1[config.vuexPlus.baseStoreName];
   if (getterKey !== config.vuexPlus.baseStoreName) {
     localApi = searchDeeper(api$1[config.vuexPlus.baseStoreName], getterKey + suffix);
   }
-  return localApi[config.method][config.key].replace(config.vuexPlus.baseStoreName, config.vuexPlus.storeInstanceName);
+  return localApi[config.method][config.key]
+            .replace(config.vuexPlus.baseStoreName, config.vuexPlus.storeInstanceName);
 }
 
 var map = {
@@ -288,11 +289,11 @@ var map = {
     Object.keys(m).forEach(function (key) {
       result[key] = function get() {
         var path = getFullPath({
-            method: 'get',
-            key: key,
-            mappedKey: m[key],
-            subinstance: this.subinstance,
-            vuexPlus: this['$vuex+']
+          method: 'get',
+          key: key,
+          mappedKey: m[key],
+          subinstance: this.subinstance,
+          vuexPlus: this['$vuex+'],
         });
 
         // localApi.get[key].replace(this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName)
@@ -307,11 +308,11 @@ var map = {
     Object.keys(m).forEach(function (key) {
       result[key] = function dispatch(payload) {
         var path = getFullPath({
-            method: 'act',
-            key: key,
-            mappedKey: m[key],
-            subinstance: this.subinstance,
-            vuexPlus: this['$vuex+']
+          method: 'act',
+          key: key,
+          mappedKey: m[key],
+          subinstance: this.subinstance,
+          vuexPlus: this['$vuex+'],
         });
         return this.$store.dispatch(path, payload);
       };
