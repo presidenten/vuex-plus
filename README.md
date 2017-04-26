@@ -1,15 +1,11 @@
 # Vuex+
-Opinionated library that handles instances in Vuex.
-
-Vuex+ makes it easy to decide when to share state and when to use new instances.
+Vuex+ opinionated library that handles instances in Vuex and makes it easy to decide when to share state and when to use new instances.
 ```html
 <counterGroup></counterGroup>
 <counterGroup></counterGroup>
 <counterGroup instance="foo"></counterGroup>
 ```
 ![piri](./docs/instances.gif)
-
-Vuex+ uses Webpack to handle automation.
 
 ### Enhancements over Vuex instance handling (2.3.0)+
 From Vuex 2.3.0 onward vuex supports the same notation as vue `data` property to [handle instantiation](https://vuex.vuejs.org/en/modules.html).
@@ -26,6 +22,12 @@ Enhancements:
 ### How to use
 Check out the extensive tutorial bundled with the example:
 [https://github.com/presidenten/vuex-plus-demo](https://github.com/presidenten/vuex-plus-demo)
+
+### Requirements
+- Webpack
+- Naming conventions for:
+  - Vuex module filename
+  - Vuex module variable names
 
 ### Todo
 - Clean up code
