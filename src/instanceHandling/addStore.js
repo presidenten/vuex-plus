@@ -1,4 +1,5 @@
 import newStore from './newStore.js';
+import { api, remapBaseStore } from './api.js';
 import { getStoreInstanceName, toCamelCase } from './helpers.js';
 import { registerForHMR, unregisterForHMR } from './hmrHandler.js';
 
@@ -45,6 +46,9 @@ export function add(baseStoreName) {
         if (!this.$store._modules.root._children[this['$vuex+'].storeInstanceName]) { // eslint-disable-line
           this.$store.registerModule(this['$vuex+'].storeInstanceName, store);
 
+          const remappedApi = remapBaseStore(store.$api, this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName);
+          api[this['$vuex+'].storeInstanceName] = remappedApi;
+
           if (module.hot) {
             this.$hmrHandler = new HmrHandler(this['$vuex+'].storeInstanceName, getNewInstanceStore);
             registerForHMR(this.$hmrHandler, baseStoreName, this['$vuex+'].storeInstanceName);
@@ -57,6 +61,8 @@ export function add(baseStoreName) {
 
         if (!this.preserve && counter[this['$vuex+'].storeInstanceName] === 0) {
           this.$store.unregisterModule(this['$vuex+'].storeInstanceName);
+
+          // delete api[this['$vuex+'].storeInstanceName];
 
           if (module.hot) {
             unregisterForHMR(this.$hmrHandler);

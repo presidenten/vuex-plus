@@ -1,3 +1,4 @@
+import { api, remapBaseStore } from './api.js';
 import { toCamelCase } from './helpers.js';
 
 let handlers = [];
@@ -27,6 +28,10 @@ export const hmrHandler = (updatedModules) => {
       .forEach((handler) => {
         modules[handler.storeInstanceName] = handler.newStore(updatedModules[key]);
       });
+
+    Object.keys(modules).forEach((m) => {
+      api[m] = remapBaseStore(modules[m].$api, modules[m].name, m);
+    });
     store.hotUpdate({ modules });
   });
 };

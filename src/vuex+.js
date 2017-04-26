@@ -5,7 +5,7 @@ import storeWrapper from './instanceHandling/storeWrapper.js';
 import { hmrHandler, setStore } from './instanceHandling/hmrHandler.js';
 import { getLocalPath } from './instanceHandling/helpers.js';
 import { add, setup } from './instanceHandling/addStore.js';
-import * as apiManager from './instanceHandling/api.js';
+import { api } from './instanceHandling/api.js';
 
 export const addStore = add;
 
@@ -32,10 +32,9 @@ function searchDeeper(map, key) {
 const getFullPath = (config) => {
   const suffix = config.instance ? '$' + config.instance : '';
   const getterKey = config.subpath.match(/[a-zA-Z]*/)[0];
-  let localApi = apiManager.api[config.vuexPlus.baseStoreName];
-
+  let localApi = api[config.vuexPlus.baseStoreName];
   if (getterKey !== config.vuexPlus.baseStoreName) {
-    localApi = searchDeeper(apiManager.api[config.vuexPlus.baseStoreName], getterKey + suffix);
+    localApi = searchDeeper(api[config.vuexPlus.baseStoreName], getterKey + suffix);
   }
 
   if (!localApi) {
@@ -145,24 +144,35 @@ export const newInstance = function newInstance(substore, instance) {
  * @returns {any} - Value from Vuex getter
  */
 export const global = {
-  api: apiManager.api,
-
-  get({ path, context }) {
-    const localPath = getLocalPath(path, context);
-
-    return context.rootGetters[localPath];
+  get api() {
+    return clone(api);
   },
 
-  dispatch({ path, data, context }) {
-    const localPath = getLocalPath(path, context);
+  get({ path, context, local }) {
+    if (local) {
+      const localPath = getLocalPath(path, context);
+      return context.rootGetters[localPath];
+    }
 
-    return context.dispatch(localPath, data, { root: true });
+    return context.rootGetters[path];
   },
 
-  commit({ path, data, context }) {
-    const localPath = getLocalPath(path, context);
+  dispatch({ path, data, context, local }) {
+    if (local) {
+      const localPath = getLocalPath(path, context);
+      return context.dispatch(localPath, data, { root: true });
+    }
 
-    return context.commit(localPath, data, { root: true });
+    return context.dispatch(path, data, { root: true });
+  },
+
+  commit({ path, data, context, local }) {
+    if (local) {
+      const localPath = getLocalPath(path, context);
+      return context.commit(localPath, data, { root: true });
+    }
+
+    return context.commit(path, data, { root: true });
   },
 };
 
@@ -175,7 +185,6 @@ export default {
         if (!setupDone && this.$store) {
           setStore(this.$store);
           const importer = contextHmr.getNewInstance();
-          apiManager.generateAPI(importer);
           setup(importer);
           importer.getModules();
           importer.setupHMR(hmrHandler);
