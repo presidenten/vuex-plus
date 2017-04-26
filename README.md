@@ -32,7 +32,7 @@ Check out the extensive tutorial bundled with the example:
 - Clean up comments
 - Write tests
 
-### Contributers
+### Coauthor
 - [Zyrica](https://github.com/zyrica)
 
 # License
