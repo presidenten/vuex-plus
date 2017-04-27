@@ -35,7 +35,6 @@ export default function add(baseStoreName) {
           baseStoreName,
           storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
         };
-
         counter[this['$vuex+'].storeInstanceName] = counter[this['$vuex+'].storeInstanceName] || 0;
         counter[this['$vuex+'].storeInstanceName]++;
 
@@ -47,6 +46,7 @@ export default function add(baseStoreName) {
           this.$store.registerModule(this['$vuex+'].storeInstanceName, store);
 
           const remappedApi = remapBaseStore(store.$api, this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName);
+          api[this['$vuex+'].baseStoreName] = store.$api;
           api[this['$vuex+'].storeInstanceName] = remappedApi;
 
           if (module.hot) {

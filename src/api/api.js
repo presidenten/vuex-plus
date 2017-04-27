@@ -34,22 +34,26 @@ export function extractSubstoreApi(map, key) {
 
 export const getFullPath = (config) => {
   const suffix = config.instance ? '$' + config.instance : '';
+  let key = config.subpath.slice(config.subpath.indexOf('/') + 1);
   const getterKey = config.subpath.match(/[a-zA-Z]*/)[0];
-  let localApi = api[config.vuexPlus.baseStoreName];
+  let localApi = api[config.vuexPlus.storeInstanceName];
   if (getterKey !== config.vuexPlus.baseStoreName) {
-    localApi = extractSubstoreApi(api[config.vuexPlus.baseStoreName], getterKey + suffix);
+    localApi = extractSubstoreApi(api[config.vuexPlus.storeInstanceName], getterKey + suffix);
   }
 
-  if (!localApi) {
+  while (key.split('/').length > 1) {
+    localApi = localApi[key.split('/')[0]];
+    key = key.slice(key.split('/')[0].length + 1);
+  }
+
+  if (!localApi || !localApi[config.method]) {
     const instance = config.subpath.split('/')[0] + '$' + config.instance;
-    console.error('[Vuex+ warn]: Cant find substore instance "' + instance + '" in "' + config.container + '"');
+    console.error('[Vuex+ warn]: Cant find substore instance "' + instance + '" in "' + config.container + '"' +
+                  ', when looking for', config.subpath, '. Api is:', api);
     return undefined;
   }
 
-  const fullPath = localApi[config.method][config.key]
-                     .replace(config.vuexPlus.baseStoreName, config.vuexPlus.storeInstanceName);
-
-  return fullPath;
+  return localApi[config.method][key];
 };
 
 export function remapBaseStore(storeApi, baseStoreName, newStoreName) {

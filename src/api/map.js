@@ -1,5 +1,17 @@
 import { getFullPath } from './api.js';
 
+const getTagName = (self) => {
+  let tag = '-unknown-';
+  if (self.$parent) {
+    const vnode = self.$parent.$vnode || self.$parent._vnode; // eslint-disable-line
+
+    if (vnode && vnode.componentOptions && vnode.componentOptions.tag) {
+      tag = vnode.componentOptions.tag;
+    }
+  }
+  return tag;
+};
+
 export default {
   getters(m) {
     const result = {};
@@ -11,9 +23,8 @@ export default {
           subpath: m[key],
           instance: this.instance,
           vuexPlus: this['$vuex+'],
-          container: this.$parent.$vnode.componentOptions.tag,
+          container: getTagName(this),
         });
-
         return this.$store.getters[path];
       };
     });
@@ -30,9 +41,8 @@ export default {
           subpath: m[key],
           instance: this.instance,
           vuexPlus: this['$vuex+'],
-          container: this.$parent.$vnode.componentOptions.tag,
+          container: getTagName(this),
         });
-
         return this.$store.dispatch(path, payload);
       };
     });
