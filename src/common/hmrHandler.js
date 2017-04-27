@@ -1,4 +1,4 @@
-import { api, remapBaseStore } from './api.js';
+import { api, remapBaseStore } from '../api/api.js';
 import { toCamelCase } from './helpers.js';
 
 let handlers = [];

@@ -1,7 +1,28 @@
 import clone from 'clone';
-import { toCamelCase } from './helpers.js';
-import { addModuleToNames } from './api.js';
+import { toCamelCase } from '../common/helpers.js';
 
+/**
+ * Private method that modifies magics strings to contain their parents
+ * @param {Object} api - object tree with magic strings
+ * @param {string} parentName - parentName
+ * @returns {Object} all tree nodes have been padded with parentName '/'
+ */
+function addParentToPath(subapi, parentName) {
+  const result = {};
+  Object.keys(subapi).forEach((type) => {
+    if (type === 'get' || type === 'act' || type === 'mutate') {
+      result[type] = {};
+      Object.keys(subapi[type]).forEach((pathName) => {
+        const path = subapi[type][pathName];
+        result[type][pathName] = parentName + '/' + path;
+      });
+    } else {
+      result[type] = addParentToPath(subapi[type], parentName);
+    }
+  });
+
+  return result;
+}
 
 /**
  * Modify Vuex Module to contain an api with magic strings
@@ -42,7 +63,7 @@ export default function (store) {
   // Clone modules
   if (store.modules) {
     Object.keys(store.modules).forEach((name) => {
-      store.api[name] = addModuleToNames(camelCasedName, store.modules[name].api);
+      store.api[name] = addParentToPath(store.modules[name].api, camelCasedName);
     });
   }
 

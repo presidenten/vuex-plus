@@ -1,7 +1,7 @@
 import newStore from './newStore.js';
-import { api, remapBaseStore } from './api.js';
-import { getStoreInstanceName, toCamelCase } from './helpers.js';
-import { registerForHMR, unregisterForHMR } from './hmrHandler.js';
+import { api, remapBaseStore } from '../api/api.js';
+import { getStoreInstanceName, toCamelCase } from '../common/helpers.js';
+import { registerForHMR, unregisterForHMR } from '../common/hmrHandler.js';
 
 let importer;
 
@@ -18,7 +18,7 @@ export function setup(newImporter) {
  * @param {Object} loadedModule - The loaded javascript module containing the Vuex module store
  * @returns {mixin, api} api for the loaded module and a mixin
  */
-export function add(baseStoreName) {
+export default function add(baseStoreName) {
   const loadedModule = importer.getModules()[baseStoreName];
   const counter = {};
   function HmrHandler(instanceName, getNewInstanceStore) {
@@ -61,8 +61,6 @@ export function add(baseStoreName) {
 
         if (!this.preserve && counter[this['$vuex+'].storeInstanceName] === 0) {
           this.$store.unregisterModule(this['$vuex+'].storeInstanceName);
-
-          // delete api[this['$vuex+'].storeInstanceName];
 
           if (module.hot) {
             unregisterForHMR(this.$hmrHandler);
