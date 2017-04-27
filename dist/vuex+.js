@@ -1,5 +1,5 @@
-import clone from 'clone';
 import contextHmr from 'webpack-context-vuex-hmr';
+import clone from 'clone';
 
 /**
  * The api for all stores
@@ -119,6 +119,126 @@ var hmrHandler = function (updatedModules) {
     store$1.hotUpdate({ modules: modules });
   });
 };
+
+/**
+ * Create new namespaced store instance
+ * @param {string} storeInstanceName - The full instance name
+ * @param {string} instance - Instance name, same as in `instance="my-counter"`
+ * @param {string} baseStoreName - The base store name, same as in `store({ name })`
+ * @param {Object} store - The base store name, same as in `store({ name })`
+ * @returns {Object} Vuex module store with submodules
+ */
+function newStore(storeInstanceName, instance, baseStoreName, store) {
+  var resultingStore = {
+    namespaced: true,
+  };
+
+  Object.assign(resultingStore, store);
+  resultingStore.state = {};
+  if (store.state) {
+    resultingStore.state = clone(store.state, false);
+  }
+  resultingStore.state['vuex+'] = {};
+  if (instance) {
+    resultingStore.state['vuex+'].instance = instance;
+  }
+  resultingStore.state['vuex+'].storeName = baseStoreName;
+  ['actions', 'getters', 'mutations'].forEach(function (type) {
+    if (store[type]) {
+      resultingStore[type] = {};
+      Object.keys(store[type]).forEach(function (name) {
+        var newName = name.replace(baseStoreName, storeInstanceName);
+        resultingStore[type][newName] = store[type][name];
+      });
+    }
+  });
+  if (resultingStore.modules) {
+    resultingStore.modules = {};
+    Object.keys(store.modules).forEach(function (subInstanceName) {
+      resultingStore.modules[subInstanceName] = newStore(storeInstanceName, instance, baseStoreName, store.modules[subInstanceName]); // eslint-disable-line
+    });
+  }
+
+  return resultingStore;
+}
+
+var importer;
+
+function setup(newImporter) {
+  importer = newImporter;
+}
+
+/**
+ * Add a new store instance
+ * The Vue component gets two props:
+ * - instance {string}: Contains the instance name
+ * - preserve {boolean}: If true, the store wont be discarded when the final instance is destroyed
+ * @param {string} baseStoreName - The base store name, same as the store filename
+ * @param {Object} loadedModule - The loaded javascript module containing the Vuex module store
+ * @returns {mixin, api} api for the loaded module and a mixin
+ */
+function add(baseStoreName) {
+  var loadedModule = importer.getModules()[baseStoreName];
+  var counter = {};
+  function HmrHandler(instanceName, getNewInstanceStore) {
+    return function (newLoadedModule) { return getNewInstanceStore(newLoadedModule); };
+  }
+
+  return {
+    api: loadedModule.api,
+    mixin: {
+      props: ['instance', 'preserve'],
+      created: function created() {
+        var this$1 = this;
+
+        baseStoreName = toCamelCase(baseStoreName.replace(/-store$/, ''));
+        this['$vuex+'] = {
+          baseStoreName: baseStoreName,
+          storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
+        };
+        counter[this['$vuex+'].storeInstanceName] = counter[this['$vuex+'].storeInstanceName] || 0;
+        counter[this['$vuex+'].storeInstanceName]++;
+
+        var getNewInstanceStore = function (newLoadedModule) { return newStore(this$1['$vuex+'].storeInstanceName, this$1.instance,
+                                                                baseStoreName, newLoadedModule); };
+
+        var store = getNewInstanceStore(loadedModule);
+        if (!this.$store._modules.root._children[this['$vuex+'].storeInstanceName]) { // eslint-disable-line
+          this.$store.registerModule(this['$vuex+'].storeInstanceName, store);
+
+          var remappedApi = remapBaseStore(store.$api, this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName);
+          api[this['$vuex+'].baseStoreName] = store.$api;
+          api[this['$vuex+'].storeInstanceName] = remappedApi;
+
+          if (module.hot) {
+            this.$hmrHandler = new HmrHandler(this['$vuex+'].storeInstanceName, getNewInstanceStore);
+            registerForHMR(this.$hmrHandler, baseStoreName, this['$vuex+'].storeInstanceName);
+          }
+        }
+      },
+
+      destroyed: function destroyed() {
+        counter[this['$vuex+'].storeInstanceName]--;
+
+        if (!this.preserve && counter[this['$vuex+'].storeInstanceName] === 0) {
+          this.$store.unregisterModule(this['$vuex+'].storeInstanceName);
+
+          if (module.hot) {
+            unregisterForHMR(this.$hmrHandler);
+          }
+        }
+      },
+    },
+  };
+}
+
+function setupVuexPlus($store) {
+  setStore($store);
+  var importer = contextHmr.getNewInstance();
+  setup(importer);
+  importer.getModules();
+  importer.setupHMR(hmrHandler);
+}
 
 var getTagName = function (self) {
   var tag = '-unknown-';
@@ -300,118 +420,6 @@ var _store = function (store) {
   return store;
 };
 
-/**
- * Create new namespaced store instance
- * @param {string} storeInstanceName - The full instance name
- * @param {string} instance - Instance name, same as in `instance="my-counter"`
- * @param {string} baseStoreName - The base store name, same as in `store({ name })`
- * @param {Object} store - The base store name, same as in `store({ name })`
- * @returns {Object} Vuex module store with submodules
- */
-function newStore(storeInstanceName, instance, baseStoreName, store) {
-  var resultingStore = {
-    namespaced: true,
-  };
-
-  Object.assign(resultingStore, store);
-  resultingStore.state = {};
-  if (store.state) {
-    resultingStore.state = clone(store.state, false);
-  }
-  resultingStore.state['vuex+'] = {};
-  if (instance) {
-    resultingStore.state['vuex+'].instance = instance;
-  }
-  resultingStore.state['vuex+'].storeName = baseStoreName;
-  ['actions', 'getters', 'mutations'].forEach(function (type) {
-    if (store[type]) {
-      resultingStore[type] = {};
-      Object.keys(store[type]).forEach(function (name) {
-        var newName = name.replace(baseStoreName, storeInstanceName);
-        resultingStore[type][newName] = store[type][name];
-      });
-    }
-  });
-  if (resultingStore.modules) {
-    resultingStore.modules = {};
-    Object.keys(store.modules).forEach(function (subInstanceName) {
-      resultingStore.modules[subInstanceName] = newStore(storeInstanceName, instance, baseStoreName, store.modules[subInstanceName]); // eslint-disable-line
-    });
-  }
-
-  return resultingStore;
-}
-
-var importer;
-
-function setup(newImporter) {
-  importer = newImporter;
-}
-
-/**
- * Add a new store instance
- * The Vue component gets two props:
- * - instance {string}: Contains the instance name
- * - preserve {boolean}: If true, the store wont be discarded when the final instance is destroyed
- * @param {string} baseStoreName - The base store name, same as the store filename
- * @param {Object} loadedModule - The loaded javascript module containing the Vuex module store
- * @returns {mixin, api} api for the loaded module and a mixin
- */
-function add(baseStoreName) {
-  var loadedModule = importer.getModules()[baseStoreName];
-  var counter = {};
-  function HmrHandler(instanceName, getNewInstanceStore) {
-    return function (newLoadedModule) { return getNewInstanceStore(newLoadedModule); };
-  }
-
-  return {
-    api: loadedModule.api,
-    mixin: {
-      props: ['instance', 'preserve'],
-      created: function created() {
-        var this$1 = this;
-
-        baseStoreName = toCamelCase(baseStoreName.replace(/-store$/, ''));
-        this['$vuex+'] = {
-          baseStoreName: baseStoreName,
-          storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
-        };
-        counter[this['$vuex+'].storeInstanceName] = counter[this['$vuex+'].storeInstanceName] || 0;
-        counter[this['$vuex+'].storeInstanceName]++;
-
-        var getNewInstanceStore = function (newLoadedModule) { return newStore(this$1['$vuex+'].storeInstanceName, this$1.instance,
-                                                                baseStoreName, newLoadedModule); };
-
-        var store = getNewInstanceStore(loadedModule);
-        if (!this.$store._modules.root._children[this['$vuex+'].storeInstanceName]) { // eslint-disable-line
-          this.$store.registerModule(this['$vuex+'].storeInstanceName, store);
-
-          var remappedApi = remapBaseStore(store.$api, this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName);
-          api[this['$vuex+'].baseStoreName] = store.$api;
-          api[this['$vuex+'].storeInstanceName] = remappedApi;
-
-          if (module.hot) {
-            this.$hmrHandler = new HmrHandler(this['$vuex+'].storeInstanceName, getNewInstanceStore);
-            registerForHMR(this.$hmrHandler, baseStoreName, this['$vuex+'].storeInstanceName);
-          }
-        }
-      },
-
-      destroyed: function destroyed() {
-        counter[this['$vuex+'].storeInstanceName]--;
-
-        if (!this.preserve && counter[this['$vuex+'].storeInstanceName] === 0) {
-          this.$store.unregisterModule(this['$vuex+'].storeInstanceName);
-
-          if (module.hot) {
-            unregisterForHMR(this.$hmrHandler);
-          }
-        }
-      },
-    },
-  };
-}
-
 var _newInstance = function (substore, instance) {
   var result = clone(substore);
   Object.keys(result.api).forEach(function (type) {
@@ -426,7 +434,7 @@ var _newInstance = function (substore, instance) {
 };
 
 var setupDone = false;
-var _vuePluginInstall$1 = {
+var _vuePluginInstall = {
   install: function install(Vue) {
     Vue.mixin({
       props: ['instance'],
@@ -461,8 +469,6 @@ var _vuePluginInstall$1 = {
   },
 };
 
-// import setupVuexPlus from './mixins/setupVuexPlus.js';
-
 var map = _map;
 var store = _store;
 var global = _global;
@@ -470,4 +476,9 @@ var addStore = add;
 var hmrCallback = hmrHandler;
 var newInstance = _newInstance;
 
-export { map, store, global, addStore, hmrCallback, newInstance };export default _vuePluginInstall$1;
+var vuex_ = {
+  vuePlugin: _vuePluginInstall,
+  vuexPlugin: setupVuexPlus,
+};
+
+export { map, store, global, addStore, hmrCallback, newInstance };export default vuex_;
