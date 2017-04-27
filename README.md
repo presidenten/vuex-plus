@@ -16,7 +16,8 @@ Enhancements:
 - Instances can be shared across components
 - Flag to decide if the state instance should be clared when the last top level instance component is destroyed
 - Submodule instances
-- Generated API for magic strings
+- Generated API with magic strings in all vuex modules for getters/actions/mutations
+- Generated global API with magic strings for global getters/actions/mutations
 - Automatic Vuex HMR (needs naming conventions)
 
 ### How to use
