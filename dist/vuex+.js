@@ -433,22 +433,12 @@ var _newInstance = function (substore, instance) {
   return result;
 };
 
-var setupDone = false;
 var _vuePluginInstall = {
   install: function install(Vue) {
     Vue.mixin({
       props: ['instance'],
       created: function created() {
         var this$1 = this;
-
-        if (!setupDone && this.$store) {
-          setStore(this.$store);
-          var importer = contextHmr.getNewInstance();
-          setup(importer);
-          importer.getModules();
-          importer.setupHMR(hmrHandler);
-          setupDone = true;
-        }
 
         var findModuleName = function (parent) {
           if (!this$1['$vuex+'] && parent.$parent) {
