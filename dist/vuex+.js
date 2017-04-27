@@ -85,11 +85,9 @@ var getStoreInstanceName = function (storeName, instance) {
 
 var toCamelCase = function (str) { return str.replace(/(-|_)([a-z])/g, function (s) { return s[1].toUpperCase(); }); };
 
+var vuexInstance = {};
+
 var handlers = [];
-var store$1;
-var setStore = function (vuexStore) {
-  store$1 = vuexStore;
-};
 
 var registerForHMR = function (newStore, baseStoreName, storeInstanceName) {
   handlers.push({
@@ -116,7 +114,7 @@ var hmrHandler = function (updatedModules) {
     Object.keys(modules).forEach(function (m) {
       api[m] = remapBaseStore(modules[m].$api, modules[m].name, m);
     });
-    store$1.hotUpdate({ modules: modules });
+    vuexInstance.store.hotUpdate({ modules: modules });
   });
 };
 
@@ -233,7 +231,7 @@ function add(baseStoreName) {
 }
 
 function setupVuexPlus($store) {
-  setStore($store);
+  vuexInstance.store = $store;
   var importer = contextHmr.getNewInstance();
   setup(importer);
   importer.getModules();
@@ -290,9 +288,9 @@ var _map = {
   },
 };
 
-var getLocalPath = function (path, context) {
-  var storeName = context.state['vuex+'].storeName;
-  var instance = context.state['vuex+'].instance;
+var getLocalPath = function (path, state) {
+  var storeName = state['vuex+'].storeName;
+  var instance = state['vuex+'].instance;
   return path.replace(storeName, getStoreInstanceName(storeName, instance));
 };
 
@@ -310,14 +308,24 @@ var _global = {
   get: function get(ref) {
     var path = ref.path;
     var context = ref.context;
+    var state = ref.state;
     var local = ref.local;
 
+    if (!state && !context) {
+      console.error('Cant global.get without `store` or `context`');
+    }
     if (local) {
-      var localPath = getLocalPath(path, context);
-      return context.rootGetters[localPath];
+      var localPath = getLocalPath(path, state || context.state);
+      if (context) {
+        return context.rootGetters[localPath];
+      }
+      return vuexInstance.store.getters[localPath];
     }
 
-    return context.rootGetters[path];
+    if (context) {
+      return context.rootGetters[path];
+    }
+    return vuexInstance.store.getters[path];
   },
 
   dispatch: function dispatch(ref) {
@@ -326,8 +334,11 @@ var _global = {
     var context = ref.context;
     var local = ref.local;
 
+    if (!context) {
+      console.error('Cant global.dispatch without `context`');
+    }
     if (local) {
-      var localPath = getLocalPath(path, context);
+      var localPath = getLocalPath(path, context.state);
       return context.dispatch(localPath, data, { root: true });
     }
 
@@ -340,8 +351,11 @@ var _global = {
     var context = ref.context;
     var local = ref.local;
 
+    if (!context) {
+      console.error('Cant global.commit without `context`');
+    }
     if (local) {
-      var localPath = getLocalPath(path, context);
+      var localPath = getLocalPath(path, context.state);
       return context.commit(localPath, data, { root: true });
     }
 
@@ -466,9 +480,11 @@ var addStore = add;
 var hmrCallback = hmrHandler;
 var newInstance = _newInstance;
 
+var $store = vuexInstance.store;
+
 var vuex_ = {
   vuePlugin: _vuePluginInstall,
   vuexPlugin: setupVuexPlus,
 };
 
-export { map, store, global, addStore, hmrCallback, newInstance };export default vuex_;
+export { map, store, global, addStore, hmrCallback, newInstance, $store };export default vuex_;

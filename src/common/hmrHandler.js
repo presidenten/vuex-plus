@@ -1,11 +1,8 @@
 import { api, remapBaseStore } from '../api/api.js';
 import { toCamelCase } from './helpers.js';
+import vuexInstance from '../vuexInstance.js';
 
 let handlers = [];
-let store;
-export const setStore = (vuexStore) => {
-  store = vuexStore;
-};
 
 export const registerForHMR = (newStore, baseStoreName, storeInstanceName) => {
   handlers.push({
@@ -32,6 +29,6 @@ export const hmrHandler = (updatedModules) => {
     Object.keys(modules).forEach((m) => {
       api[m] = remapBaseStore(modules[m].$api, modules[m].name, m);
     });
-    store.hotUpdate({ modules });
+    vuexInstance.store.hotUpdate({ modules });
   });
 };

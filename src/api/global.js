@@ -1,10 +1,11 @@
 import clone from 'clone';
 import { api } from './api.js';
 import { getStoreInstanceName } from '../common/helpers.js';
+import vuexInstance from '../vuexInstance.js';
 
-const getLocalPath = (path, context) => {
-  const storeName = context.state['vuex+'].storeName;
-  const instance = context.state['vuex+'].instance;
+const getLocalPath = (path, state) => {
+  const storeName = state['vuex+'].storeName;
+  const instance = state['vuex+'].instance;
   return path.replace(storeName, getStoreInstanceName(storeName, instance));
 };
 
@@ -19,18 +20,30 @@ export default {
     return clone(api);
   },
 
-  get({ path, context, local }) {
+  get({ path, context, state, local }) {
+    if (!state && !context) {
+      console.error('Cant global.get without `store` or `context`');
+    }
     if (local) {
-      const localPath = getLocalPath(path, context);
-      return context.rootGetters[localPath];
+      const localPath = getLocalPath(path, state || context.state);
+      if (context) {
+        return context.rootGetters[localPath];
+      }
+      return vuexInstance.store.getters[localPath];
     }
 
-    return context.rootGetters[path];
+    if (context) {
+      return context.rootGetters[path];
+    }
+    return vuexInstance.store.getters[path];
   },
 
   dispatch({ path, data, context, local }) {
+    if (!context) {
+      console.error('Cant global.dispatch without `context`');
+    }
     if (local) {
-      const localPath = getLocalPath(path, context);
+      const localPath = getLocalPath(path, context.state);
       return context.dispatch(localPath, data, { root: true });
     }
 
@@ -38,8 +51,11 @@ export default {
   },
 
   commit({ path, data, context, local }) {
+    if (!context) {
+      console.error('Cant global.commit without `context`');
+    }
     if (local) {
-      const localPath = getLocalPath(path, context);
+      const localPath = getLocalPath(path, context.state);
       return context.commit(localPath, data, { root: true });
     }
 
