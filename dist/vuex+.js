@@ -419,18 +419,12 @@ var _newInstance = function (substore, instance) {
   return result;
 };
 
-var setupDone = false;
 var _vuePluginInstall$1 = {
   install: function install(Vue) {
     Vue.mixin({
       props: ['instance'],
       created: function created() {
         var this$1 = this;
-
-        if (!setupDone && this.$store) {
-          setupVuexPlus(this.$store);
-          setupDone = true;
-        }
 
         var findModuleName = function (parent) {
           if (!this$1['$vuex+'] && parent.$parent) {
@@ -458,6 +452,6 @@ var addStore = add;
 var hmrCallback = hmrHandler;
 var newInstance = _newInstance;
 
-var manualSetup = setupVuexPlus;
+var connectStore = setupVuexPlus;
 
-export { map, store, global, addStore, hmrCallback, newInstance, manualSetup };export default _vuePluginInstall$1;
+export { map, store, global, addStore, hmrCallback, newInstance, connectStore };export default _vuePluginInstall$1;

@@ -15,6 +15,6 @@ export const addStore = _addStore;
 export const hmrCallback = hmrHandler;
 export const newInstance = _newInstance;
 
-export const manualSetup = setupVuexPlus;
+export const connectStore = setupVuexPlus;
 
 export default _vuePluginInstall;
