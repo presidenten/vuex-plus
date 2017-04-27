@@ -1,5 +1,5 @@
 # Vuex+
-Vuex+ opinionated library that handles instances in Vuex and makes it easy to decide when to share state and when to use new instances.
+Vuex+ is an opinionated library that handles instances in Vuex and makes it easy to decide when to share state and when to use new instances.
 ```html
 <counterGroup></counterGroup>
 <counterGroup></counterGroup>
