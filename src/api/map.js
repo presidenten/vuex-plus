@@ -11,7 +11,6 @@ export default {
   getters(m) {
     const result = {};
     Object.keys(m).forEach((key) => {
-      console.info('this', this);
       result[key] = function get() {
         const parentInstances = getParentInstances(this);
         if (m[key]) {

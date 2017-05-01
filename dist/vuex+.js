@@ -320,11 +320,8 @@ var _map = {
    * @returns {Object} - Object containing the mapped getters
    */
   getters: function getters(m) {
-    var this$1 = this;
-
     var result = {};
     Object.keys(m).forEach(function (key) {
-      console.info('this', this$1);
       result[key] = function get() {
         var parentInstances = getParentInstances(this);
         if (m[key]) {
