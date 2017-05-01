@@ -29,5 +29,18 @@ module.exports = {
     'import/extensions': 0,
     'class-methods-use-this': 0,
     'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0
+  },
+  globals:{
+    describe: true,
+    fdescribe: true,
+    xdescribe: true,
+    beforeEach: true,
+    afterEach: true,
+    it: true,
+    fit: true,
+    xit: true,
+    expect: true,
+    spyOn: true,
+    jest: true
   }
 }

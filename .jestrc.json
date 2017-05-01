@@ -1,0 +1,14 @@
+{
+  "bail": true,
+  "testMatch": [
+    "**/?(*.)(spec).js?(x)"
+  ],
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "vue"
+  ],
+  "clearMocks": true,
+  "resetMocks": true,
+  "resetModules": true
+}

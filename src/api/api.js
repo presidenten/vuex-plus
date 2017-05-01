@@ -6,56 +6,90 @@
  * ```
  */
 export const api = {};
+export const setApi = (newApi) => {
+  Object.keys(newApi).forEach((key) => {
+    api[key] = newApi[key];
+  });
+};
 
 /**
- * Get subtree from map matching key
- * TODO -- verify --
+ * Match array of results strings and return the ones matching parent instances
  */
-export function extractSubstoreApi(map, key) {
-  const submodules = Object.keys(map).filter(k => k !== 'get' && k !== 'act' && k !== 'mutate');
-  const keyIsInMap = submodules.indexOf(key) >= 0;
+export const matchToInstances = (allResults, parentInstances) => {
+  const results = [];
+  allResults
+    .forEach((path) => {
+      let workingPath = path;
+      let pathMatchesInstances;
 
-  if (keyIsInMap) {
-    return map[key];
-  }
+      if (parentInstances.length === 0) {
+        pathMatchesInstances = path.indexOf('$') === -1;
+      } else {
+        pathMatchesInstances = parentInstances.reduce((acc, curr) => {
+          const $idx = workingPath.indexOf('$');
+          const result = workingPath.indexOf(curr + '/') === $idx;
+          workingPath = workingPath.slice($idx + curr.length + 1);
+          return acc && result;
+        }, true);
+      }
 
-  // TODO Speed up with some nice algorithm
-  let result;
-  submodules.forEach((submodule) => {
-    const searchResult = extractSubstoreApi(map[submodule], key);
-    if (searchResult) {
-      result = searchResult;
-    }
-  });
+      if (pathMatchesInstances) {
+        results.push(path);
+      }
+    });
 
-  return result;
-}
+  return results;
+};
 
-
+/**
+ * Input subpath and figure out full path
+ * config: {
+ *  subpath: 'some/path',
+ *  instance: this.instance,  // 'instanceName',
+ *  parentInstances: ['$a', '$b'],
+ *  vuexPlus: this['$vuex+'], // { baseStoreName: 'top', storeInstanceName: 'top' },
+ *  container: 'tag name for better error output',
+ * }
+ */
 export const getFullPath = (config) => {
-  const suffix = config.instance ? '$' + config.instance : '';
-  let key = config.subpath.slice(config.subpath.indexOf('/') + 1);
-  const getterKey = config.subpath.match(/[a-zA-Z]*/)[0];
-  let localApi = api[config.vuexPlus.storeInstanceName];
-  if (getterKey !== config.vuexPlus.baseStoreName) {
-    localApi = extractSubstoreApi(api[config.vuexPlus.storeInstanceName], getterKey + suffix);
+  const suffix = config.instance ? '\\$' + config.instance : '';
+  if (!config.subpath) {
+    console.error('[Vuex+ warn]: Cant calculate path', config);
+    return undefined;
   }
+  const getterKey = config.subpath.match(/\w*/)[0];
+  const key = config.subpath.slice(getterKey.length + 1);
+  const localApi = api[config.vuexPlus.storeInstanceName];
+  const apiString = JSON.stringify(localApi, undefined, 2);
+  const regexp = new RegExp('\\"?[\\w\\/\\$]*?[\\/|\\"]' + getterKey + suffix + '\\/' + key.replace(/\$/g, '\\$') + '\\"', 'g');
 
-  while (key.split('/').length > 1) {
-    localApi = localApi[key.split('/')[0]];
-    key = key.slice(key.split('/')[0].length + 1);
-  }
+  const allResults = apiString.match(regexp);
 
-  if (!localApi || !localApi[config.method]) {
+  if (!allResults) {
     const instance = config.subpath.split('/')[0] + '$' + config.instance;
     console.error('[Vuex+ warn]: Cant find substore instance "' + instance + '" in "' + config.container + '"' +
-                  ', when looking for', config.subpath, '. Api is:', api);
+                  ', when looking for', getterKey + '/' + key + '. Api is:', api, undefined, 2);
     return undefined;
   }
 
-  return localApi[config.method][key];
+  const relevantResults = allResults
+                            .map(r => r.slice(1, -1))
+                            .filter(r => r.slice(0, getterKey.length) === getterKey ||
+                                         r.indexOf('/' + getterKey + '/' + key));
+
+  let results = matchToInstances(relevantResults, config.parentInstances); // eslint-disable-line
+
+  if (!results) {
+    console.warn('[Vuex+] Could not determine path to', config.subpath, ', matching with instances:', config.parentInstances,
+      'in', localApi, 'for tag', config.container + '.\nResults were:', results, '\nRecommended action is to add explicit instances.');
+  }
+
+  return results[0];
 };
 
+/**
+ * Set instance to all toplevel stores in `storeApi` paths
+ */
 export function remapBaseStore(storeApi, baseStoreName, newStoreName) {
   newStoreName = newStoreName || baseStoreName;
   const result = {};

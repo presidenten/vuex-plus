@@ -1,64 +1,60 @@
 import clone from 'clone';
 import { api } from './api.js';
-import { getStoreInstanceName } from '../common/helpers.js';
+import { getLocalPath } from '../common/helpers.js';
 import vuexInstance from '../vuexInstance.js';
 
-const getLocalPath = (path, state) => {
-  const storeName = state['vuex+'].storeName;
-  const instance = state['vuex+'].instance;
-  return path.replace(storeName, getStoreInstanceName(storeName, instance));
-};
-
-/**
- * Method that returns a getter from the same instance.
- * @param {string} - Path as as string, usually from api. Eg. `api.example.get.something`
- * @param {Context} - Vuex context
- * @returns {any} - Value from Vuex getter
- */
 export default {
   get api() {
     return clone(api);
   },
 
-  get({ path, context, state, local }) {
-    if (!state && !context) {
-      console.error('Cant global.get without `store` or `context`');
-    }
-    if (local) {
-      const localPath = getLocalPath(path, state || context.state);
-      if (context) {
-        return context.rootGetters[localPath];
-      }
+  /**
+   * Method that returns a getter.
+   * Only set `state` when getting from same instance
+   * @param {string} path - Path as as string, usually from api. Eg. `api.example.get.something`
+   * @param {Object} state - Optional local vuex state. Set it when searching in same instance.
+   * @returns {any} - Value from Vuex getter
+   */
+  get({ path, state }) {
+    if (state) {
+      const localPath = getLocalPath(path, state);
       return vuexInstance.store.getters[localPath];
     }
 
-    if (context) {
-      return context.rootGetters[path];
-    }
     return vuexInstance.store.getters[path];
   },
 
-  dispatch({ path, data, context, local }) {
-    if (!context) {
-      console.error('Cant global.dispatch without `context`');
-    }
-    if (local) {
-      const localPath = getLocalPath(path, context.state);
-      return context.dispatch(localPath, data, { root: true });
+  /**
+   * Method that dispatches an action.
+   * Only set `state` when dispatching in same instance
+   * @param {string} path - Path as as string, usually from api. Eg. `api.example.get.something`
+   * @param {any} data - Optional data to pass along with action.
+   * @param {Object} state - Optional local vuex state. Set it when searching in same instance.
+   * @returns {any} - Value from Vuex action
+   */
+  dispatch({ path, data, state }) {
+    if (state) {
+      const localPath = getLocalPath(path, state);
+      return vuexInstance.store.dispatch(localPath, data);
     }
 
-    return context.dispatch(path, data, { root: true });
+    return vuexInstance.store.dispatch(path, data);
   },
 
-  commit({ path, data, context, local }) {
-    if (!context) {
-      console.error('Cant global.commit without `context`');
-    }
-    if (local) {
-      const localPath = getLocalPath(path, context.state);
-      return context.commit(localPath, data, { root: true });
+  /**
+   * Method that commits a mutation.
+   * Only set `state` when commiting in same instance
+   * @param {string} path - Path as as string, usually from api. Eg. `api.example.get.something`
+   * @param {any} data - Optional data to pass along with mutation.
+   * @param {Object} state - Optional local vuex state. Set it when searching in same instance.
+   * @returns {any} - Value from Vuex mutation
+   */
+  commit({ path, data, state }) {
+    if (state) {
+      const localPath = getLocalPath(path, state);
+      return vuexInstance.store.commit(localPath, data);
     }
 
-    return context.commit(path, data, { root: true });
+    return vuexInstance.store.commit(path, data);
   },
 };

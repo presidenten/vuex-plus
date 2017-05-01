@@ -1,14 +1,8 @@
 import clone from 'clone';
+import { remapBaseStore } from '../api/api.js';
 
 export default (substore, instance) => {
   const result = clone(substore);
-  Object.keys(result.api).forEach((type) => {
-    if (type === 'get' || type === 'act' || type === 'mutate') {
-      Object.keys(result.api[type]).forEach((key) => {
-        result.api[type][key] = result.api[type][key].split('/')[0] + '$' + instance + '/' + key;
-      });
-    }
-  });
-
+  result.api = remapBaseStore(result.api, result.name, result.name + '$' + instance);
   return result;
 };
