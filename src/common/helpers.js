@@ -22,7 +22,7 @@ export const getLocalPath = (path, state) => {
 
 
 export const getTagName = (self) => {
-  let tag = '-unknown-';
+  let tag = 'unknown-tag';
   if (self.$parent) {
     const vnode = self.$parent.$vnode || self.$parent._vnode; // eslint-disable-line
 
@@ -30,19 +30,32 @@ export const getTagName = (self) => {
       tag = vnode.componentOptions.tag;
     }
   }
-  return tag;
+  return '<' + tag + '>';
 };
 
 
-export const getParentInstances = (self) => {
+export const getInstances = (subpath, self) => {
   let path = self.instance ? '/$' + self.instance : '';
   let parent = self;
+
   while (parent.$parent) {
     parent = parent.$parent;
     const suffix = parent.instance ? '$' + parent.instance + '/' : '';
     if (suffix) path = suffix + path;
   }
-  return path === '' ? [] : path.split('/').filter(i => i.length);
+
+  const instances = path === '' ? [] : path.split('/').filter(i => i.length);
+
+  if (subpath) {
+    const subInstances = subpath.match(/\$\w+/g);
+    if (subInstances) {
+      subInstances.forEach((instance) => {
+        instances.push(instance);
+      });
+    }
+  }
+
+  return instances;
 };
 
 
