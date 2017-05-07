@@ -79,7 +79,7 @@ describe('map.actions', () => {
     expect(store.dispatch).toBeCalledWith('top/subtree/path', 13);
   });
 
-  it('should return global actions with instances', function() { // eslint-disable-line
+  it('should return global actions with instances', () => {
     self['$vuex+'].storeInstanceName = 'top$foo';
     self.instance = 'bar';
     const actions = map.actions.call(self, {
@@ -89,7 +89,7 @@ describe('map.actions', () => {
     expect(store.dispatch).toBeCalledWith('top$foo/subtree$bar/path', 42);
   });
 
-  it('should return local actions', function() { // eslint-disable-line
+  it('should return local actions', () => {
     const actions = map.actions.call(self, {
       path: 'subtree/path',
     });
@@ -97,7 +97,7 @@ describe('map.actions', () => {
     expect(store.dispatch).toBeCalledWith('top/subtree/path', 19);
   });
 
-  it('should return local actions with instances', function() { // eslint-disable-line
+  it('should return local actions with instances', () => {
     self['$vuex+'].storeInstanceName = 'top$foo';
     self.instance = 'bar';
     self.$parent = {
