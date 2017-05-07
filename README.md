@@ -34,9 +34,7 @@ Check out the extensive tutorial bundled with the example:
   - Vuex module variable names
 
 ### Todo
-- Clean up code
 - Clean up comments
-- Write tests
 
 ### Coauthor
 - [Zyrica](https://github.com/zyrica)
