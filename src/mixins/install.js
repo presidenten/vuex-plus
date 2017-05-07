@@ -6,7 +6,7 @@ export default {
         const findModuleName = (parent) => {
           if (!this['$vuex+'] && parent.$parent) {
             if (!parent.$parent['$vuex+']) {
-              findModuleName(parent.$parent, '/');
+              findModuleName(parent.$parent);
             } else {
               this['$vuex+'] = {
                 baseStoreName: parent.$parent['$vuex+'].baseStoreName,
@@ -16,7 +16,7 @@ export default {
           }
         };
 
-        findModuleName(this, '/');
+        findModuleName(this);
       },
     });
   },

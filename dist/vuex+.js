@@ -19,7 +19,7 @@ var toCamelCase = function (str) {
   if (!str) {
     return '';
   }
-  return str.replace(/(-|_)([a-z])/g, function (s) { return s[1].toUpperCase(); });
+  return str.replace(/(-|_)([\w])/g, function (s) { return s[1].toUpperCase(); });
 };
 
 
@@ -181,6 +181,9 @@ var vuexInstance = {};
 
 var handlers = [];
 
+
+
+
 var registerForHMR = function (newStore, baseStoreName, storeInstanceName) {
   handlers.push({
     storeName: baseStoreName + '-store',
@@ -264,7 +267,6 @@ function setup(newImporter) {
  * - instance {string}: Contains the instance name
  * - preserve {boolean}: If true, the store wont be discarded when the final instance is destroyed
  * @param {string} baseStoreName - The base store name, same as the store filename
- * @param {Object} loadedModule - The loaded javascript module containing the Vuex module store
  * @returns {mixin, api} api for the loaded module and a mixin
  */
 function add(baseStoreName) {
@@ -295,7 +297,6 @@ function add(baseStoreName) {
         var store = getNewInstanceStore(loadedModule);
         if (!this.$store._modules.root._children[this['$vuex+'].storeInstanceName]) { // eslint-disable-line
           this.$store.registerModule(this['$vuex+'].storeInstanceName, store);
-
           var remappedApi = remapBaseStore(store.$api, this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName);
           api[this['$vuex+'].baseStoreName] = store.$api;
           api[this['$vuex+'].storeInstanceName] = remappedApi;
@@ -520,7 +521,7 @@ var _vuePluginInstall = {
         var findModuleName = function (parent) {
           if (!this$1['$vuex+'] && parent.$parent) {
             if (!parent.$parent['$vuex+']) {
-              findModuleName(parent.$parent, '/');
+              findModuleName(parent.$parent);
             } else {
               this$1['$vuex+'] = {
                 baseStoreName: parent.$parent['$vuex+'].baseStoreName,
@@ -530,7 +531,7 @@ var _vuePluginInstall = {
           }
         };
 
-        findModuleName(this, '/');
+        findModuleName(this);
       },
     });
   },

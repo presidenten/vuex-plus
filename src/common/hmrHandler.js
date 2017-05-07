@@ -4,6 +4,11 @@ import vuexInstance from '../vuexInstance.js';
 
 let handlers = [];
 
+export const getHandlers = () => handlers.slice();
+export const clearHandlers = () => {
+  handlers = [];
+};
+
 export const registerForHMR = (newStore, baseStoreName, storeInstanceName) => {
   handlers.push({
     storeName: baseStoreName + '-store',

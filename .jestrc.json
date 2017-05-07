@@ -1,7 +1,7 @@
 {
   "bail": true,
   "testMatch": [
-    "<rootDir>/src/api/**/?(*.)(spec).js?(x)"
+    "<rootDir>/src/**/?(*.)(spec).js?(x)"
   ],
   "moduleFileExtensions": [
     "js",

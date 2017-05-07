@@ -15,7 +15,6 @@ export function setup(newImporter) {
  * - instance {string}: Contains the instance name
  * - preserve {boolean}: If true, the store wont be discarded when the final instance is destroyed
  * @param {string} baseStoreName - The base store name, same as the store filename
- * @param {Object} loadedModule - The loaded javascript module containing the Vuex module store
  * @returns {mixin, api} api for the loaded module and a mixin
  */
 export default function add(baseStoreName) {
@@ -44,7 +43,6 @@ export default function add(baseStoreName) {
         const store = getNewInstanceStore(loadedModule);
         if (!this.$store._modules.root._children[this['$vuex+'].storeInstanceName]) { // eslint-disable-line
           this.$store.registerModule(this['$vuex+'].storeInstanceName, store);
-
           const remappedApi = remapBaseStore(store.$api, this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName);
           api[this['$vuex+'].baseStoreName] = store.$api;
           api[this['$vuex+'].storeInstanceName] = remappedApi;
