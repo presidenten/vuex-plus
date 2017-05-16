@@ -7,7 +7,7 @@ export const getStoreInstanceName = (storeName, instance) => {
 
 
 export const toCamelCase = (str) => {
-  if (!str) {
+  if (!str || typeof str !== 'string') {
     return '';
   }
   return str.replace(/(-|_)([\w])/g, s => s[1].toUpperCase());

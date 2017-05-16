@@ -23,6 +23,10 @@ describe('helpers.toCamelCase', () => {
   it('keeps camel case intact', () => {
     expect(helpers.toCamelCase('aFooBarA$b')).toEqual('aFooBarA$b');
   });
+  it('returns empty string if invalid value', () => {
+    expect(helpers.toCamelCase(undefined)).toEqual('');
+    expect(helpers.toCamelCase(5)).toEqual('');
+  });
 });
 
 describe('helpers.getLocalPath', () => {
@@ -120,5 +124,9 @@ describe('helpers.getInstances', () => {
 describe('helpers.getSubInstances', () => {
   it('returns all instances from substring', () => {
     expect(helpers.getSubInstances('a$a1/b/c$c1/d')).toEqual(['$a1', '$c1']);
+  });
+
+  it('returns empty array on empty path', () => {
+    expect(helpers.getSubInstances('')).toEqual([]);
   });
 });

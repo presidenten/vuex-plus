@@ -1,4 +1,5 @@
 import global from './global.js';
+import * as api from './api.js';
 import vuexInstance from '../vuexInstance.js';
 
 beforeEach(() => {
@@ -10,6 +11,14 @@ beforeEach(() => {
     dispatch: jest.fn(),
     commit: jest.fn(),
   };
+});
+
+describe('global.api', () => {
+  it('returns the api', () => {
+    const newApi = { id: 42 };
+    api.setApi(newApi);
+    expect(global.api).toEqual(newApi);
+  });
 });
 
 describe('global.get', () => {
