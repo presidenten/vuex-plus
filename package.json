@@ -1,6 +1,6 @@
 {
   "name": "vuex-plus",
-  "version": "0.8.2",
+  "version": "1.0.0",
   "description": "Opinionated library that handles module instances in Vuex",
   "main": "dist/vuex+.js",
   "scripts": {
@@ -10,6 +10,7 @@
     "lint": "eslint src & eslint loader.js",
     "test": "jest --config=.jestrc.json",
     "testcov": "jest --coverage --config=.jestrc.json",
+    "posttestcov": "codecov",
     "testdev": "jest --watch --config=.jestrc.json"
   },
   "repository": {
@@ -37,6 +38,7 @@
     "babel-preset-env": "^1.4.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-stage-2": "^6.24.1",
+    "codecov": "^2.2.0",
     "eslint": "^3.19.0",
     "eslint-cli": "^1.1.0",
     "eslint-config-airbnb-base": "^11.1.3",
