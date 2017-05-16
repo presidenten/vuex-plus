@@ -21,7 +21,7 @@ export default {
 
   /**
    * Map local paths `require('./example-substore.js').api.act.value`
-   * to the corresponding vuex getter.
+   * to the corresponding vuex action.
    * @param {Object} map - Object of all method properties to be mapped to actions
    * @returns {Object} - Object containing the mapped actions
    */

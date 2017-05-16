@@ -5,6 +5,10 @@ import { registerForHMR, unregisterForHMR } from '../common/hmrHandler.js';
 
 let importer;
 
+/**
+ * Setup module with new importer from webpack-context-vuex-hmr
+ * @param  {Object} newImporter The importer
+ */
 export function setup(newImporter) {
   importer = newImporter;
 }

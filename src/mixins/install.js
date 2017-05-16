@@ -1,4 +1,8 @@
 export default {
+  /**
+   * Use to install as Vue plugin
+   * @param  {Object} Vue The vue instance
+   */
   install(Vue) {
     Vue.mixin({
       props: ['instance'],

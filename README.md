@@ -7,9 +7,6 @@ Vuex+ is an opinionated library that handles instances in Vuex and makes it easy
 ```
 ![piri](./docs/instances.gif)
 
-### Heads up!!
-Still prerelease, but the library should reach 1.0.0 and get a proper release by mid may. Very close now.
-
 ### Enhancements over Vuex instance handling (2.3.0)+
 From Vuex 2.3.0 onward vuex supports the same notation as vue `data` property to [handle instantiation](https://vuex.vuejs.org/en/modules.html).
 
@@ -32,9 +29,6 @@ Check out the extensive tutorial bundled with the example:
 - Naming conventions for:
   - Vuex module filename
   - Vuex module variable names
-
-### Todo
-- Clean up comments
 
 ### Coauthor
 - [Zyrica](https://github.com/zyrica)

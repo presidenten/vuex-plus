@@ -3,7 +3,7 @@ import { toCamelCase } from '../common/helpers.js';
 
 /**
  * Private method that modifies magics strings to contain their parents
- * @param {Object} api - object tree with magic strings
+ * @param {Object} subapi - api subtree with magic strings
  * @param {string} parentName - parentName
  * @returns {Object} all tree nodes have been padded with parentName '/'
  */
