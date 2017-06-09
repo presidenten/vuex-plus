@@ -357,48 +357,45 @@ function add(baseStoreName) {
   }
 
   return {
-    api: loadedModule.api,
-    mixin: {
-      props: ['instance', 'preserve'],
-      created: function created() {
-        var this$1 = this;
+    props: ['instance', 'preserve'],
+    created: function created() {
+      var this$1 = this;
 
-        baseStoreName = toCamelCase(baseStoreName.replace(/-store$/, ''));
-        this['$vuex+'] = {
-          baseStoreName: baseStoreName,
-          storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
-        };
-        counter[this['$vuex+'].storeInstanceName] = counter[this['$vuex+'].storeInstanceName] || 0;
-        counter[this['$vuex+'].storeInstanceName]++;
+      baseStoreName = toCamelCase(baseStoreName.replace(/-store$/, ''));
+      this['$vuex+'] = {
+        baseStoreName: baseStoreName,
+        storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
+      };
+      counter[this['$vuex+'].storeInstanceName] = counter[this['$vuex+'].storeInstanceName] || 0;
+      counter[this['$vuex+'].storeInstanceName]++;
 
-        var getNewInstanceStore = function (newLoadedModule) { return newStore(this$1['$vuex+'].storeInstanceName, this$1.instance,
-                                                                baseStoreName, newLoadedModule); };
+      var getNewInstanceStore = function (newLoadedModule) { return newStore(this$1['$vuex+'].storeInstanceName, this$1.instance,
+                                                              baseStoreName, newLoadedModule); };
 
-        var store = getNewInstanceStore(loadedModule);
-        if (!this.$store._modules.root._children[this['$vuex+'].storeInstanceName]) { // eslint-disable-line
-          this.$store.registerModule(this['$vuex+'].storeInstanceName, store);
-          var remappedApi = remapBaseStore(store.$api, this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName);
-          api[this['$vuex+'].baseStoreName] = store.$api;
-          api[this['$vuex+'].storeInstanceName] = remappedApi;
+      var store = getNewInstanceStore(loadedModule);
+      if (!this.$store._modules.root._children[this['$vuex+'].storeInstanceName]) { // eslint-disable-line
+        this.$store.registerModule(this['$vuex+'].storeInstanceName, store);
+        var remappedApi = remapBaseStore(store.$api, this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName);
+        api[this['$vuex+'].baseStoreName] = store.$api;
+        api[this['$vuex+'].storeInstanceName] = remappedApi;
 
-          if (module.hot) {
-            this.$hmrHandler = new HmrHandler(this['$vuex+'].storeInstanceName, getNewInstanceStore);
-            registerForHMR(this.$hmrHandler, baseStoreName, this['$vuex+'].storeInstanceName);
-          }
+        if (module.hot) {
+          this.$hmrHandler = new HmrHandler(this['$vuex+'].storeInstanceName, getNewInstanceStore);
+          registerForHMR(this.$hmrHandler, baseStoreName, this['$vuex+'].storeInstanceName);
         }
-      },
+      }
+    },
 
-      destroyed: function destroyed() {
-        counter[this['$vuex+'].storeInstanceName]--;
+    destroyed: function destroyed() {
+      counter[this['$vuex+'].storeInstanceName]--;
 
-        if (!this.preserve && counter[this['$vuex+'].storeInstanceName] === 0) {
-          this.$store.unregisterModule(this['$vuex+'].storeInstanceName);
+      if (!this.preserve && counter[this['$vuex+'].storeInstanceName] === 0) {
+        this.$store.unregisterModule(this['$vuex+'].storeInstanceName);
 
-          if (module.hot) {
-            unregisterForHMR(this.$hmrHandler);
-          }
+        if (module.hot) {
+          unregisterForHMR(this.$hmrHandler);
         }
-      },
+      }
     },
   };
 }
@@ -645,7 +642,7 @@ var _vuePluginInstall = {
 var map = _map;
 var store = _store;
 var global = _global;
-var addStore = add;
+var register = add;
 var hmrCallback = hmrHandler;
 var newInstance = _newInstance;
 
@@ -667,9 +664,7 @@ var vuex_ = {
     // Patch replaceState to set $parent to all states on updates state
     var org = Vuex.Store.prototype.replaceState;
     Vuex.Store.prototype.replaceState = function replacestate(newState) {
-      console.log('newState', newState); // eslint-disable-line
       setParents(newState);
-      console.log('newStatepost', newState); // eslint-disable-line
       org.call(this, newState);
     };
 
@@ -680,7 +675,7 @@ var vuex_ = {
 exports.map = map;
 exports.store = store;
 exports.global = global;
-exports.addStore = addStore;
+exports.register = register;
 exports.hmrCallback = hmrCallback;
 exports.newInstance = newInstance;
 exports['default'] = vuex_;
