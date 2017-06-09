@@ -1,5 +1,5 @@
 # Vuex+ [![Build Status](https://travis-ci.org/presidenten/vuex-plus.svg?branch=master)](https://travis-ci.org/presidenten/vuex-plus)
-Vuex+ is an opinionated library that handles instances in Vuex and makes it easy to decide when to share state and when to use new instances.
+Vuex+ is an opinionated library that makes Vuex module instances possible.
 ```html
 <counterGroup></counterGroup>
 <counterGroup></counterGroup>
@@ -7,18 +7,23 @@ Vuex+ is an opinionated library that handles instances in Vuex and makes it easy
 ```
 ![piri](./docs/instances.gif)
 
-### Enhancements over Vuex instance handling (2.3.0)+
-From Vuex 2.3.0 onward vuex supports the same notation as vue `data` property to [handle instantiation](https://vuex.vuejs.org/en/modules.html).
-
-In most cases this will be enough, but sometimes you need something more. Here is what [vuex+](https://github.com/presidenten/vuex-plus) brings to the table:
-
-Enhancements:
-- Instances can be shared across components
-- Flag to decide if the state instance should be clared when the last top level instance component is destroyed
-- Submodule instances
-- Generated API with magic strings in all vuex modules for getters/actions/mutations
-- Generated global API with magic strings for global getters/actions/mutations
+**Enhancements:**
+- Dynamic root level module instances that can be shared across components
+- Root level instances can be persisted or cleared when components are destroyed
+- Module states are decorated with a `$parent`-state getter
+  - Yes, still serializable states
+  - Yes, still injectable states through devtools
+- Static submodule instances
+- Components bound to submodules know in which statetree they belong
+  - Vuex+ mapGetters and mapActions expand to full path
 - Automatic Vuex HMR (needs naming conventions)
+- Modules are automatically get `name` and `namespaced` parameters set
+- Works side by side with normal vuex
+
+
+_These enhancements from v1 are deprecated, but still working for now:_
+- _(Generated API with magic strings in all vuex modules for getters/actions/mutations)_
+- _(Generated global API with magic strings for global getters/actions/mutations)_
 
 ### How to use
 Check out the extensive tutorial bundled with the example:
@@ -27,8 +32,8 @@ Check out the extensive tutorial bundled with the example:
 ### Requirements
 - Webpack
 - Naming conventions for:
-  - Vuex module filename
-  - Vuex module variable names
+  - Vuex module filenames
+  - Vuex submodule filenames
 
 ### Coauthor
 - [Zyrica](https://github.com/zyrica)
