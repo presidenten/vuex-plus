@@ -9,10 +9,11 @@ describe('setupVuexPlus', () => {
     getters: {},
     actions: {},
     mutations: {},
+    registerModule: jest.fn(),
   };
   beforeEach(() => {
     importer = {
-      getModules: jest.fn(),
+      getModules: jest.fn().mockReturnValue({}),
       setupHMR: jest.fn(),
     };
 
@@ -37,5 +38,19 @@ describe('setupVuexPlus', () => {
   it('calls addStore.setup with the vuex store', () => {
     setupVuexPlus(store);
     expect(addStore.setup).toBeCalled();
+  });
+
+  it('retisters normal vuex modules', () => {
+    const module = { bar: 42 };
+    importer.getModules = jest.fn().mockReturnValue({
+      'foo-bar-store': module,
+      'not-registered-store': {
+        $api: {},
+        api: {},
+      },
+    });
+    setupVuexPlus(store);
+    expect(store.registerModule).toHaveBeenCalledTimes(1);
+    expect(store.registerModule).toBeCalledWith('fooBar', module);
   });
 });
