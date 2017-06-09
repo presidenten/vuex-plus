@@ -19,8 +19,8 @@ export const clearHandlers = () => {
 /**
  * Registers module for HMR
  * @param  {Object} newStore          The store object
- * @param  {string} baseStoreName     Base store name
- * @param  {string} storeInstanceName Store instance name
+ * @param  {string} baseStoreName     Base store name     - foo
+ * @param  {string} storeInstanceName Store instance name - foo$bar
  */
 export const registerForHMR = (newStore, baseStoreName, storeInstanceName) => {
   handlers.push({
@@ -45,16 +45,24 @@ export const unregisterForHMR = (newStore) => {
 export const hmrHandler = (updatedModules) => {
   const modules = {};
   Object.keys(updatedModules).forEach((key) => {
-    const storeName = toCamelCase(key.replace('-store', '')) + '-store';
+    const moduleLength = Object.keys(modules).length;
+    const storeName = toCamelCase(key.replace(/-store$/, '')) + '-store';
     handlers
       .filter(handler => handler.storeName === storeName)
       .forEach((handler) => {
         modules[handler.storeInstanceName] = handler.newStore(updatedModules[key]);
       });
 
+    if (moduleLength === Object.keys(modules).length) {
+      modules[toCamelCase(key.replace(/-store$/, ''))] = updatedModules[key];
+    }
+
     Object.keys(modules).forEach((m) => {
-      api[m] = remapBaseStore(modules[m].$api, modules[m].name, m);
+      if (modules[m].$api) {
+        api[m] = remapBaseStore(modules[m].$api, modules[m].name, m);
+      }
     });
+
     vuexInstance.store.hotUpdate({ modules });
   });
 };
