@@ -8,7 +8,7 @@ import clone from 'clone';
  * @param {Object} store - The base store name, same as in `store({ name })`
  * @returns {Object} Vuex module store with submodules
  */
-export default function newStore(storeInstanceName, instance, baseStoreName, store) {
+export default function newStore(storeInstanceName, instance, baseStoreName, store, parent) {
   const resultingStore = {
     namespaced: true,
   };
@@ -18,6 +18,9 @@ export default function newStore(storeInstanceName, instance, baseStoreName, sto
   if (store.state) {
     resultingStore.state = clone(store.state, false);
   }
+
+  Object.defineProperty(resultingStore.state, '$parent', { get() { return parent; } });
+
   resultingStore.state['vuex+'] = {};
   if (instance) {
     resultingStore.state['vuex+'].instance = instance;
@@ -35,7 +38,7 @@ export default function newStore(storeInstanceName, instance, baseStoreName, sto
   if (resultingStore.modules) {
     resultingStore.modules = {};
     Object.keys(store.modules).forEach((subInstanceName) => {
-      resultingStore.modules[subInstanceName] = newStore(storeInstanceName, instance, baseStoreName, store.modules[subInstanceName]); // eslint-disable-line
+      resultingStore.modules[subInstanceName] = newStore(storeInstanceName, instance, baseStoreName, store.modules[subInstanceName], resultingStore.state); // eslint-disable-line
     });
   }
 

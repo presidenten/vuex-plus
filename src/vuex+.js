@@ -16,6 +16,29 @@ export const hmrCallback = hmrHandler;
 export const newInstance = _newInstance;
 
 export default {
-  vuePlugin: _vuePluginInstall,
-  vuexPlugin: setupVuexPlus,
+  getVuePlugin(Vue) { // eslint-disable-line
+    return _vuePluginInstall;
+  },
+  getVuexPlugin(Vuex) {
+    // Add $parent to all vuex models states
+    function setParents(parent) {
+      Object.keys(parent).forEach((prop) => {
+        if (prop !== 'vuex+' && typeof parent[prop] === 'object' && parent[prop]['vuex+']) {
+          setParents(parent[prop]);
+          Object.defineProperty(parent[prop], '$parent', { get() { return parent; } });
+        }
+      });
+    }
+
+    // Patch replaceState to set $parent to all states on updates state
+    const org = Vuex.Store.prototype.replaceState;
+    Vuex.Store.prototype.replaceState = function replacestate(newState) {
+      console.log('newState', newState); // eslint-disable-line
+      setParents(newState);
+      console.log('newStatepost', newState); // eslint-disable-line
+      org.call(this, newState);
+    };
+
+    return setupVuexPlus;
+  },
 };

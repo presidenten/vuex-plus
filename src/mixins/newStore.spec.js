@@ -90,6 +90,14 @@ describe('newStore', () => {
     });
   });
 
+  it('clones and decorates module states with \'$parent\'', () => {
+    const freshStore = newStore('foo$test', 'test', 'foo', store);
+
+    expect(freshStore.state.$parent).toEqual(undefined);
+    expect(freshStore.modules.bar.state.$parent).toEqual(freshStore.state);
+    expect(freshStore.modules.bar.modules.piri.state.$parent).toEqual(freshStore.modules.bar.state);
+  });
+
   it('clones all other store properties', () => {
     const freshStore = newStore('foo$test', 'test', 'foo', store);
 
