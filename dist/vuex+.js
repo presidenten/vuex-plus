@@ -238,8 +238,8 @@ var handlers = [];
 /**
  * Registers module for HMR
  * @param  {Object} newStore          The store object
- * @param  {string} baseStoreName     Base store name
- * @param  {string} storeInstanceName Store instance name
+ * @param  {string} baseStoreName     Base store name     - foo
+ * @param  {string} storeInstanceName Store instance name - foo$bar
  */
 var registerForHMR = function (newStore, baseStoreName, storeInstanceName) {
   handlers.push({
@@ -264,16 +264,24 @@ var unregisterForHMR = function (newStore) {
 var hmrHandler = function (updatedModules) {
   var modules = {};
   Object.keys(updatedModules).forEach(function (key) {
-    var storeName = toCamelCase(key.replace('-store', '')) + '-store';
+    var moduleLength = Object.keys(modules).length;
+    var storeName = toCamelCase(key.replace(/-store$/, '')) + '-store';
     handlers
       .filter(function (handler) { return handler.storeName === storeName; })
       .forEach(function (handler) {
         modules[handler.storeInstanceName] = handler.newStore(updatedModules[key]);
       });
 
+    if (moduleLength === Object.keys(modules).length) {
+      modules[toCamelCase(key.replace(/-store$/, ''))] = updatedModules[key];
+    }
+
     Object.keys(modules).forEach(function (m) {
-      api[m] = remapBaseStore(modules[m].$api, modules[m].name, m);
+      if (modules[m].$api) {
+        api[m] = remapBaseStore(modules[m].$api, modules[m].name, m);
+      }
     });
+
     vuexInstance.store.hotUpdate({ modules: modules });
   });
 };
@@ -286,7 +294,7 @@ var hmrHandler = function (updatedModules) {
  * @param {Object} store - The base store name, same as in `store({ name })`
  * @returns {Object} Vuex module store with submodules
  */
-function newStore(storeInstanceName, instance, baseStoreName, store) {
+function newStore(storeInstanceName, instance, baseStoreName, store, parent) {
   var resultingStore = {
     namespaced: true,
   };
@@ -296,6 +304,9 @@ function newStore(storeInstanceName, instance, baseStoreName, store) {
   if (store.state) {
     resultingStore.state = clone(store.state, false);
   }
+
+  Object.defineProperty(resultingStore.state, '$parent', { get: function get() { return parent; } });
+
   resultingStore.state['vuex+'] = {};
   if (instance) {
     resultingStore.state['vuex+'].instance = instance;
@@ -313,7 +324,7 @@ function newStore(storeInstanceName, instance, baseStoreName, store) {
   if (resultingStore.modules) {
     resultingStore.modules = {};
     Object.keys(store.modules).forEach(function (subInstanceName) {
-      resultingStore.modules[subInstanceName] = newStore(storeInstanceName, instance, baseStoreName, store.modules[subInstanceName]); // eslint-disable-line
+      resultingStore.modules[subInstanceName] = newStore(storeInstanceName, instance, baseStoreName, store.modules[subInstanceName], resultingStore.state); // eslint-disable-line
     });
   }
 
@@ -400,7 +411,14 @@ function setupVuexPlus($store) {
   vuexInstance.store = $store;
   var importer = contextHmr.getNewInstance();
   setup(importer);
-  importer.getModules();
+  var modules = importer.getModules();
+  // Add normal vuex modules
+  Object.keys(modules).forEach(function (moduleName) {
+    if (!modules[moduleName].$api && !modules[moduleName].api) {
+      var baseStoreName = toCamelCase(moduleName.replace(/-store$/, ''));
+      $store.registerModule(baseStoreName, modules[moduleName]);
+    }
+  });
   importer.setupHMR(hmrHandler);
 }
 
@@ -632,8 +650,31 @@ var hmrCallback = hmrHandler;
 var newInstance = _newInstance;
 
 var vuex_ = {
-  vuePlugin: _vuePluginInstall,
-  vuexPlugin: setupVuexPlus,
+  getVuePlugin: function getVuePlugin(Vue) { // eslint-disable-line
+    return _vuePluginInstall;
+  },
+  getVuexPlugin: function getVuexPlugin(Vuex) {
+    // Add $parent to all vuex models states
+    function setParents(parent) {
+      Object.keys(parent).forEach(function (prop) {
+        if (prop !== 'vuex+' && typeof parent[prop] === 'object' && parent[prop]['vuex+']) {
+          setParents(parent[prop]);
+          Object.defineProperty(parent[prop], '$parent', { get: function get() { return parent; } });
+        }
+      });
+    }
+
+    // Patch replaceState to set $parent to all states on updates state
+    var org = Vuex.Store.prototype.replaceState;
+    Vuex.Store.prototype.replaceState = function replacestate(newState) {
+      console.log('newState', newState); // eslint-disable-line
+      setParents(newState);
+      console.log('newStatepost', newState); // eslint-disable-line
+      org.call(this, newState);
+    };
+
+    return setupVuexPlus;
+  },
 };
 
 exports.map = map;
