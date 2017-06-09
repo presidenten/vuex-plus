@@ -11,7 +11,7 @@ import _vuePluginInstall from './mixins/install.js';
 export const map = _map;
 export const store = _store;
 export const global = _global;
-export const addStore = _addStore;
+export const register = _addStore;
 export const hmrCallback = hmrHandler;
 export const newInstance = _newInstance;
 
@@ -33,9 +33,7 @@ export default {
     // Patch replaceState to set $parent to all states on updates state
     const org = Vuex.Store.prototype.replaceState;
     Vuex.Store.prototype.replaceState = function replacestate(newState) {
-      console.log('newState', newState); // eslint-disable-line
       setParents(newState);
-      console.log('newStatepost', newState); // eslint-disable-line
       org.call(this, newState);
     };
 
