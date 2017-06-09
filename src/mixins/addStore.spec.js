@@ -37,28 +37,21 @@ beforeEach(() => {
   importer.getModules.mockReturnValue({ 'foo-store': module });
 });
 
-describe('addStore => { api }', () => {
-  it('exposes the api', () => {
-    const { api } = addStore('foo-store');
-    expect(api).toEqual(api);
-  });
-});
-
-describe('addStore => { mixin }', () => {
+describe('addStore => mixin', () => {
   it('exposes props', () => {
     const result = addStore('foo-store');
-    expect(result.mixin.props).toEqual(['instance', 'preserve']);
+    expect(result.props).toEqual(['instance', 'preserve']);
   });
 
   describe('mixin.created', () => {
     it('adds registers module on $store', () => {
-      const { mixin } = addStore('foo-store');
+      const mixin = addStore('foo-store');
       mixin.created.call(self);
       expect(self.$store.registerModule).toBeCalled();
     });
 
     it('adds $vuex+ propery', () => {
-      const { mixin } = addStore.call(self, 'foo-store');
+      const mixin = addStore.call(self, 'foo-store');
       mixin.created.call(self);
       expect(self['$vuex+']).toEqual({
         baseStoreName: 'foo',
@@ -69,7 +62,7 @@ describe('addStore => { mixin }', () => {
     it('adds $vuex+ propery with camel cased instance', () => {
       importer.getModules.mockReturnValue({ 'foo-choo-store': module });
       self.instance = 'bar';
-      const { mixin } = addStore.call(self, 'foo-choo-store');
+      const mixin = addStore.call(self, 'foo-choo-store');
       mixin.created.call(self);
       expect(self['$vuex+']).toEqual({
         baseStoreName: 'fooChoo',
@@ -79,7 +72,7 @@ describe('addStore => { mixin }', () => {
 
     it('updates api with base and instance', () => {
       self.instance = 'chu';
-      const { mixin } = addStore.call(self, 'foo-store');
+      const mixin = addStore.call(self, 'foo-store');
       mixin.created.call(self);
       expect(apiModule.api.foo).toEqual($api);
       expect(apiModule.api.foo$chu).toEqual({
@@ -92,7 +85,7 @@ describe('addStore => { mixin }', () => {
 
   describe('mixin.destroyed', () => {
     it('removes stores without preseve=true', () => {
-      const { mixin } = addStore.call(self, 'foo-store');
+      const mixin = addStore.call(self, 'foo-store');
       mixin.created.call(self);
       mixin.destroyed.call(self);
       expect(self.$store.unregisterModule).toBeCalledWith('foo');
@@ -100,14 +93,14 @@ describe('addStore => { mixin }', () => {
 
     it('keeps stores with preseve=true', () => {
       self.preserve = true;
-      const { mixin } = addStore.call(self, 'foo-store');
+      const mixin = addStore.call(self, 'foo-store');
       mixin.created.call(self);
       mixin.destroyed.call(self);
       expect(self.$store.unregisterModule).not.toBeCalledWith('foo');
     });
 
     it('removes stores without preseve=true, when no instances left', () => {
-      const { mixin } = addStore.call(self, 'foo-store');
+      const mixin = addStore.call(self, 'foo-store');
       mixin.created.call(self);
       mixin.created.call(self);
       mixin.destroyed.call(self);

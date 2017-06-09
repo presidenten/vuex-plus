@@ -29,46 +29,43 @@ export default function add(baseStoreName) {
   }
 
   return {
-    api: loadedModule.api,
-    mixin: {
-      props: ['instance', 'preserve'],
-      created() {
-        baseStoreName = toCamelCase(baseStoreName.replace(/-store$/, ''));
-        this['$vuex+'] = {
-          baseStoreName,
-          storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
-        };
-        counter[this['$vuex+'].storeInstanceName] = counter[this['$vuex+'].storeInstanceName] || 0;
-        counter[this['$vuex+'].storeInstanceName]++;
+    props: ['instance', 'preserve'],
+    created() {
+      baseStoreName = toCamelCase(baseStoreName.replace(/-store$/, ''));
+      this['$vuex+'] = {
+        baseStoreName,
+        storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
+      };
+      counter[this['$vuex+'].storeInstanceName] = counter[this['$vuex+'].storeInstanceName] || 0;
+      counter[this['$vuex+'].storeInstanceName]++;
 
-        const getNewInstanceStore = newLoadedModule => newStore(this['$vuex+'].storeInstanceName, this.instance,
-                                                                baseStoreName, newLoadedModule);
+      const getNewInstanceStore = newLoadedModule => newStore(this['$vuex+'].storeInstanceName, this.instance,
+                                                              baseStoreName, newLoadedModule);
 
-        const store = getNewInstanceStore(loadedModule);
-        if (!this.$store._modules.root._children[this['$vuex+'].storeInstanceName]) { // eslint-disable-line
-          this.$store.registerModule(this['$vuex+'].storeInstanceName, store);
-          const remappedApi = remapBaseStore(store.$api, this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName);
-          api[this['$vuex+'].baseStoreName] = store.$api;
-          api[this['$vuex+'].storeInstanceName] = remappedApi;
+      const store = getNewInstanceStore(loadedModule);
+      if (!this.$store._modules.root._children[this['$vuex+'].storeInstanceName]) { // eslint-disable-line
+        this.$store.registerModule(this['$vuex+'].storeInstanceName, store);
+        const remappedApi = remapBaseStore(store.$api, this['$vuex+'].baseStoreName, this['$vuex+'].storeInstanceName);
+        api[this['$vuex+'].baseStoreName] = store.$api;
+        api[this['$vuex+'].storeInstanceName] = remappedApi;
 
-          if (module.hot) {
-            this.$hmrHandler = new HmrHandler(this['$vuex+'].storeInstanceName, getNewInstanceStore);
-            registerForHMR(this.$hmrHandler, baseStoreName, this['$vuex+'].storeInstanceName);
-          }
+        if (module.hot) {
+          this.$hmrHandler = new HmrHandler(this['$vuex+'].storeInstanceName, getNewInstanceStore);
+          registerForHMR(this.$hmrHandler, baseStoreName, this['$vuex+'].storeInstanceName);
         }
-      },
+      }
+    },
 
-      destroyed() {
-        counter[this['$vuex+'].storeInstanceName]--;
+    destroyed() {
+      counter[this['$vuex+'].storeInstanceName]--;
 
-        if (!this.preserve && counter[this['$vuex+'].storeInstanceName] === 0) {
-          this.$store.unregisterModule(this['$vuex+'].storeInstanceName);
+      if (!this.preserve && counter[this['$vuex+'].storeInstanceName] === 0) {
+        this.$store.unregisterModule(this['$vuex+'].storeInstanceName);
 
-          if (module.hot) {
-            unregisterForHMR(this.$hmrHandler);
-          }
+        if (module.hot) {
+          unregisterForHMR(this.$hmrHandler);
         }
-      },
+      }
     },
   };
 }
