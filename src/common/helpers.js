@@ -1,3 +1,46 @@
+function findModuleNameFromParent(state) {
+  for (const prop in state.$parent) {
+    if (state.$parent[prop] === state) {
+      return prop;
+    }
+  }
+}
+
+function getRootStoreName(state) {
+  let moduleName = state['vuex+'].storeName;
+  if (state['vuex+'].rootInstance) {
+    moduleName += '$' + state['vuex+'].rootInstance;
+  }
+  return moduleName;
+}
+
+function findPath(state, path = '') {
+  if (state.$parent) {
+    let moduleName = findModuleNameFromParent(state.$parent);
+    if (!moduleName) {
+      moduleName = getRootStoreName(state);
+    }
+    return findPath(state.$parent, moduleName + '/' + path);
+  }
+  return path;
+}
+
+function getExpandedLocalPath(state, path) {
+  if (path.match(/^\$parent\//)) {
+    path = path.replace('$parent/', findPath(state));
+  }
+
+  if (path.match(/^\$root\//)) {
+    path = path.replace('$root', getRootStoreName(state));
+  }
+
+  if (path.includes('$parent')) {
+    path = path.replace('$parent', findModuleNameFromParent(state.$parent));
+  }
+
+  return path;
+}
+
 /**
  * Get store instance name
  * @param  {string} storeName Store name
@@ -29,11 +72,7 @@ export const toCamelCase = (str) => {
  * @param  {Object} state The vuex context state
  * @return {string}       The local path with all instances
  */
-export const getLocalPath = (path, state) => {
-  const storeName = state['vuex+'].storeName;
-  const instance = state['vuex+'].instance;
-  return path.replace(storeName, getStoreInstanceName(storeName, instance));
-};
+export const getLocalPath = (path, state) => getExpandedLocalPath(state, path);
 
 /**
  * Support method that gets tag name for error logs

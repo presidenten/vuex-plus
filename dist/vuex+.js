@@ -7,6 +7,51 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var contextHmr = _interopDefault(require('webpack-context-vuex-hmr'));
 var clone = _interopDefault(require('clone'));
 
+function findModuleNameFromParent(state) {
+  for (var prop in state.$parent) {
+    if (state.$parent[prop] === state) {
+      return prop;
+    }
+  }
+}
+
+function getRootStoreName(state) {
+  var moduleName = state['vuex+'].storeName;
+  if (state['vuex+'].rootInstance) {
+    moduleName += '$' + state['vuex+'].rootInstance;
+  }
+  return moduleName;
+}
+
+function findPath(state, path) {
+  if ( path === void 0 ) path = '';
+
+  if (state.$parent) {
+    var moduleName = findModuleNameFromParent(state.$parent);
+    if (!moduleName) {
+      moduleName = getRootStoreName(state);
+    }
+    return findPath(state.$parent, moduleName + '/' + path);
+  }
+  return path;
+}
+
+function getExpandedLocalPath(state, path) {
+  if (path.match(/^\$parent\//)) {
+    path = path.replace('$parent/', findPath(state));
+  }
+
+  if (path.match(/^\$root\//)) {
+    path = path.replace('$root', getRootStoreName(state));
+  }
+
+  if (path.includes('$parent')) {
+    path = path.replace('$parent', findModuleNameFromParent(state.$parent));
+  }
+
+  return path;
+}
+
 /**
  * Get store instance name
  * @param  {string} storeName Store name
@@ -38,11 +83,7 @@ var toCamelCase = function (str) {
  * @param  {Object} state The vuex context state
  * @return {string}       The local path with all instances
  */
-var getLocalPath = function (path, state) {
-  var storeName = state['vuex+'].storeName;
-  var instance = state['vuex+'].instance;
-  return path.replace(storeName, getStoreInstanceName(storeName, instance));
-};
+var getLocalPath = function (path, state) { return getExpandedLocalPath(state, path); };
 
 /**
  * Support method that gets tag name for error logs
@@ -309,7 +350,7 @@ function newStore(storeInstanceName, instance, baseStoreName, store, parent) {
 
   resultingStore.state['vuex+'] = {};
   if (instance) {
-    resultingStore.state['vuex+'].instance = instance;
+    resultingStore.state['vuex+'].rootInstance = instance;
   }
   resultingStore.state['vuex+'].storeName = baseStoreName;
   ['actions', 'getters', 'mutations'].forEach(function (type) {
@@ -455,7 +496,7 @@ var _map = {
   },
 };
 
-var _global = {
+var _root = {
   /**
    * Get the whole global api
    * @return {Object} Global api
@@ -641,7 +682,7 @@ var _vuePluginInstall = {
 
 var map = _map;
 var store = _store;
-var global = _global;
+var root = _root;
 var register = add;
 var hmrCallback = hmrHandler;
 var newInstance = _newInstance;
@@ -674,7 +715,7 @@ var vuex_ = {
 
 exports.map = map;
 exports.store = store;
-exports.global = global;
+exports.root = root;
 exports.register = register;
 exports.hmrCallback = hmrCallback;
 exports.newInstance = newInstance;

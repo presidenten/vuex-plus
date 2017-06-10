@@ -1,5 +1,7 @@
 import * as helpers from './helpers.js';
 
+let subState, state, parentState;
+
 describe('helpers.getStoreInstanceName', () => {
   it('should handle when no instance', () => {
     expect(helpers.getStoreInstanceName('foo')).toEqual('foo');
@@ -30,23 +32,60 @@ describe('helpers.toCamelCase', () => {
 });
 
 describe('helpers.getLocalPath', () => {
-  it('replaces store name to top instance', () => {
-    const state = {
+  beforeEach(() => {
+    subState = {
+      count: 64,
       'vuex+': {
         storeName: 'foo',
-        instance: 'bar',
+        rootInstance: 'bar',
       },
     };
-    expect(helpers.getLocalPath('foo/piri', state)).toEqual('foo$bar/piri');
+
+    state = {
+      counter$inst: subState,
+      count: 42,
+      'vuex+': {
+        storeName: 'foo',
+        rootInstance: 'bar',
+      },
+    };
+
+    parentState = {
+      choo$test: state,
+      count: 3,
+      'vuex+': {
+        storeName: 'foo',
+        rootInstance: 'bar',
+      },
+    };
+
+    Object.defineProperty(subState, '$parent', {
+      get() {
+        return state;
+      },
+    });
+    Object.defineProperty(state, '$parent', {
+      get() {
+        return parentState;
+      },
+    });
   });
 
-  it('replaces keeps store name when no instance', () => {
-    const state = {
+  it('replaces $root to root instance', () => {
+    expect(helpers.getLocalPath('$root/count', subState)).toEqual('foo$bar/count');
+  });
+
+  it('replaces $parent to parent instance', () => {
+    expect(helpers.getLocalPath('$parent/count', subState)).toEqual('foo$bar/choo$test/count');
+  });
+
+  it('makes no changes when no keywords are used', () => {
+    state = {
       'vuex+': {
         storeName: 'foo',
       },
     };
-    expect(helpers.getLocalPath('foo/piri', state)).toEqual('foo/piri');
+    expect(helpers.getLocalPath('foo/bar/piri/choo', state)).toEqual('foo/bar/piri/choo');
   });
 });
 
