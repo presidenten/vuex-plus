@@ -81,6 +81,10 @@ describe('helpers.getLocalPath', () => {
     expect(helpers.getLocalPath('$parent/count', subState)).toEqual('foo$bar/choo$test/count');
   });
 
+  it('replaces $root to root instance and $parent to parent instance', () => {
+    expect(helpers.getLocalPath('$root/$parent/count', subState)).toEqual('foo$bar/choo$test/count');
+  });
+
   it('makes no changes when no keywords are used', () => {
     expect(helpers.getLocalPath('foo/bar/piri/choo', state)).toEqual('foo/bar/piri/choo');
   });
