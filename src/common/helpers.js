@@ -1,3 +1,8 @@
+/**
+ * Finds a modules name by looking at its parent
+ * @param  {object} state Vuex modules state
+ * @return {String}       Module name
+ */
 function findModuleNameFromParent(state) {
   for (const prop in state.$parent) {
     if (state.$parent[prop] === state) {
@@ -6,6 +11,11 @@ function findModuleNameFromParent(state) {
   }
 }
 
+/**
+ * Combines info from ['vuex+'] property to root store name with instance
+ * @param  {object} state Vuex modules state
+ * @return {String}       Root store name
+ */
 function getRootStoreName(state) {
   let moduleName = state['vuex+'].storeName;
   if (state['vuex+'].rootInstance) {
@@ -14,6 +24,12 @@ function getRootStoreName(state) {
   return moduleName;
 }
 
+/**
+ * Traverses state upwards and returns the path with instances
+ * @param  {Object} state     Vuex modules state
+ * @param  {String} [path=''] Start path
+ * @return {String}           The full path
+ */
 function findPath(state, path = '') {
   if (state.$parent) {
     let moduleName = findModuleNameFromParent(state.$parent);
@@ -22,22 +38,6 @@ function findPath(state, path = '') {
     }
     return findPath(state.$parent, moduleName + '/' + path);
   }
-  return path;
-}
-
-function getExpandedLocalPath(state, path) {
-  if (path.match(/^\$parent\//)) {
-    path = path.replace('$parent/', findPath(state));
-  }
-
-  if (path.match(/^\$root\//)) {
-    path = path.replace('$root', getRootStoreName(state));
-  }
-
-  if (path.includes('$parent')) {
-    path = path.replace('$parent', findModuleNameFromParent(state.$parent));
-  }
-
   return path;
 }
 
@@ -72,7 +72,21 @@ export const toCamelCase = (str) => {
  * @param  {Object} state The vuex context state
  * @return {string}       The local path with all instances
  */
-export const getLocalPath = (path, state) => getExpandedLocalPath(state, path);
+export const getLocalPath = (path, state) => {
+  if (path.match(/^\$parent\//)) {
+    path = path.replace('$parent/', findPath(state));
+  }
+
+  if (path.match(/^\$root\//)) {
+    path = path.replace('$root', getRootStoreName(state));
+  }
+
+  if (path.includes('$parent')) {
+    path = path.replace('$parent', findModuleNameFromParent(state.$parent));
+  }
+
+  return path;
+};
 
 /**
  * Support method that gets tag name for error logs
