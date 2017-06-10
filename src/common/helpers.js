@@ -33,10 +33,12 @@ function getRootStoreName(state) {
 function findPath(state, path = '') {
   if (state.$parent) {
     let moduleName = findModuleNameFromParent(state.$parent);
-    if (!moduleName) {
-      moduleName = getRootStoreName(state);
+    if (moduleName) {
+      moduleName += '/';
+    } else {
+      moduleName = '';
     }
-    return findPath(state.$parent, moduleName + '/' + path);
+    return findPath(state.$parent, moduleName + path);
   }
   return path;
 }

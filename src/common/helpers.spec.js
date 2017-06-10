@@ -3,6 +3,7 @@ import * as helpers from './helpers.js';
 let subState;
 let state;
 let parentState;
+let topState;
 
 describe('helpers.getStoreInstanceName', () => {
   it('should handle when no instance', () => {
@@ -61,6 +62,10 @@ describe('helpers.getLocalPath', () => {
       },
     };
 
+    topState = {
+      foo$bar: parentState,
+    };
+
     Object.defineProperty(subState, '$parent', {
       get() {
         return state;
@@ -69,6 +74,11 @@ describe('helpers.getLocalPath', () => {
     Object.defineProperty(state, '$parent', {
       get() {
         return parentState;
+      },
+    });
+    Object.defineProperty(parentState, '$parent', {
+      get() {
+        return topState;
       },
     });
   });

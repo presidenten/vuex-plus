@@ -44,10 +44,12 @@ function findPath(state, path) {
 
   if (state.$parent) {
     var moduleName = findModuleNameFromParent(state.$parent);
-    if (!moduleName) {
-      moduleName = getRootStoreName(state);
+    if (moduleName) {
+      moduleName += '/';
+    } else {
+      moduleName = '';
     }
-    return findPath(state.$parent, moduleName + '/' + path);
+    return findPath(state.$parent, moduleName + path);
   }
   return path;
 }
@@ -360,6 +362,9 @@ function newStore(storeInstanceName, instance, baseStoreName, store, parent) {
     resultingStore.state = clone(store.state, false);
   }
 
+  if (!parent) {
+    parent = vuexInstance.store.state;
+  }
   Object.defineProperty(resultingStore.state, '$parent', { get: function get() { return parent; } });
 
   resultingStore.state['vuex+'] = {};

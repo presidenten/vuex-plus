@@ -1,5 +1,8 @@
 import * as addStoreModule from './addStore.js';
 import * as apiModule from '../api/api.js';
+import * as vuexInstance from '../vuexInstance.js';
+
+global.module = { hot: jest.fn() };
 
 const addStore = addStoreModule.default;
 const importer = {
@@ -14,6 +17,8 @@ let module;
 let self;
 
 beforeEach(() => {
+  vuexInstance.default.store = {};
+
   module = {
     $api,
     get: jest.fn(),

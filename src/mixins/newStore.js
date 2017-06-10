@@ -1,4 +1,5 @@
 import clone from 'clone';
+import vuexInstance from '../vuexInstance.js';
 
 /**
  * Create new namespaced store instance
@@ -19,6 +20,9 @@ export default function newStore(storeInstanceName, instance, baseStoreName, sto
     resultingStore.state = clone(store.state, false);
   }
 
+  if (!parent) {
+    parent = vuexInstance.store.state;
+  }
   Object.defineProperty(resultingStore.state, '$parent', { get() { return parent; } });
 
   resultingStore.state['vuex+'] = {};

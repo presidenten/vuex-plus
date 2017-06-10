@@ -30,9 +30,19 @@ beforeEach(() => {
     },
   };
 
+  const topState = {
+    foo$chuu: parentState,
+  };
+
   Object.defineProperty(state, '$parent', {
     get() {
       return parentState;
+    },
+  });
+
+  Object.defineProperty(parentState, '$parent', {
+    get() {
+      return topState;
     },
   });
 });

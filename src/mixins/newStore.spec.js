@@ -1,8 +1,11 @@
 import newStore from './newStore.js';
+import * as vuexInstance from '../vuexInstance.js';
 
 describe('newStore', () => {
   let store;
   beforeEach(() => {
+    vuexInstance.default.store = {};
+
     store = {
       name: 'foo',
       state: {
