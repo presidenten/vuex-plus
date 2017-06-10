@@ -1,6 +1,8 @@
 import * as helpers from './helpers.js';
 
-let subState, state, parentState;
+let subState;
+let state;
+let parentState;
 
 describe('helpers.getStoreInstanceName', () => {
   it('should handle when no instance', () => {
@@ -80,11 +82,6 @@ describe('helpers.getLocalPath', () => {
   });
 
   it('makes no changes when no keywords are used', () => {
-    state = {
-      'vuex+': {
-        storeName: 'foo',
-      },
-    };
     expect(helpers.getLocalPath('foo/bar/piri/choo', state)).toEqual('foo/bar/piri/choo');
   });
 });
