@@ -19,7 +19,7 @@ Vuex+ is an opinionated library that makes Vuex module instances possible.
 - `Vuex+` map.getters and map.actions expand module paths to full paths when component nesting order is same as vuex module nesting order
 - Automatic Vuex HMR (needs naming conventions)
 - Modules are automatically get `name` and `namespaced` parameters set
-- Works side by side with normal vuex
+- Works side by side with normal vuex modules. By following the file naming convention they also get full automatic HMR handling.
 
 
 _These enhancements from v1 are deprecated, but still working for now:_
