@@ -84,7 +84,7 @@ describe('newStore', () => {
     expect(freshStore.state).toEqual({
       count: 3,
       'vuex+': {
-        instance: 'test',
+        rootInstance: 'test',
         storeName: 'foo',
       },
     });

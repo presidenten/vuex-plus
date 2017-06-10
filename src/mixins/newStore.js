@@ -23,7 +23,7 @@ export default function newStore(storeInstanceName, instance, baseStoreName, sto
 
   resultingStore.state['vuex+'] = {};
   if (instance) {
-    resultingStore.state['vuex+'].instance = instance;
+    resultingStore.state['vuex+'].rootInstance = instance;
   }
   resultingStore.state['vuex+'].storeName = baseStoreName;
   ['actions', 'getters', 'mutations'].forEach((type) => {
