@@ -145,6 +145,39 @@ Check out the extensive tutorial bundled with the example:
       </script>
 ---
 
+## Setup in webpack
+- Resolve `vuex+` as `vuex-plus`
+```javascript
+resolve: {
+  alias: {
+    'vuex+': 'vuex-plus',
+  }
+},
+```
+- Use `vuex+` loader to add names to module stores
+```javascript
+module: {
+  rules: [
+    {
+      test: /-(store|substore)\.js$/,
+      loader: 'vuex-plus/loader',
+    },
+  ],
+},
+```
+- Vuex HMR setup:
+```javascript
+plugins: [
+ new (require('webpack/lib/ContextReplacementPlugin'))(
+   /webpack-context-vuex-hmr$/,
+   path.resolve(process.cwd(), './src'),
+   true,
+   /-store.js|-substore.js$/
+ )
+],
+```
+
+
 ### Coauthor
 - [Zyrica](https://github.com/zyrica)
 
