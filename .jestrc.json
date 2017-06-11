@@ -1,5 +1,4 @@
 {
-  "bail": true,
   "testMatch": [
     "<rootDir>/src/**/?(*.)(spec).js?(x)"
   ],
