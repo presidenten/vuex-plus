@@ -30,7 +30,8 @@ module.exports = {
     'class-methods-use-this': 0,
     'consistent-return': 0,
     'no-restricted-syntax': 0,
-    'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0
+    'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
+    'max-len': ["warn", 140, { "ignoreComments": true }]
   },
   globals:{
     describe: true,
