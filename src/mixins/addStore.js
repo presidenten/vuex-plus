@@ -40,6 +40,7 @@ export default function add(baseStoreName) {
       baseStoreName = toCamelCase(baseStoreName.replace(/-store$/, ''));
       this['$vuex+'] = {
         baseStoreName,
+        moduleName: baseStoreName,
         storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
       };
       counter[this['$vuex+'].storeInstanceName] = counter[this['$vuex+'].storeInstanceName] || 0;

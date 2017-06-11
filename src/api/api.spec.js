@@ -1,5 +1,4 @@
 import * as api from './api.js';
-import * as helpers from '../common/helpers.js';
 
 let subtree;
 let subtree$another;
@@ -7,7 +6,6 @@ let subsubtree1;
 let subsubtree2;
 let map;
 
-const originalGetInstances = helpers.getInstances;
 beforeEach(() => {
   subtree = {
     get: { path: 'top/subtree/path' },
@@ -48,8 +46,6 @@ beforeEach(() => {
     },
   };
   api.setApi({ top: map, top$foo: api.remapBaseStore(map, 'top', 'top$foo') });
-
-  helpers.getInstances = originalGetInstances;
 });
 
 describe('api.matchToInstances', () => {
@@ -112,69 +108,61 @@ describe('api.matchToInstances', () => {
 });
 
 describe('api.getFullPath', () => {
-  beforeEach(() => {
-    helpers.getInstances = jest.fn();
-  });
-
   it('Gets full path from local path', () => {
-    helpers.getInstances.mockReturnValue('$foo/$yepp/$multi'.split('/'));
     const self = {
       instance: '',
-      '$vuex+': { baseStoreName: 'top', storeInstanceName: 'top' },
+      '$vuex+': { baseStoreName: 'top', moduleName: 'subtree', storeInstanceName: 'top' },
+      $parent: {
+        '$vuex+': { baseStoreName: 'top', moduleName: 'top', storeInstanceName: 'top' },
+      },
     };
     expect(api.getFullPath('subtree/path', self)).toEqual(subtree.get.path);
   });
 
   it('Gets full path from local path pointing deeper', () => {
-    helpers.getInstances.mockReturnValue([]);
     const self = {
       instance: '',
-      '$vuex+': { baseStoreName: 'top', storeInstanceName: 'top' },
+      '$vuex+': { baseStoreName: 'top', moduleName: 'subsubtree2', storeInstanceName: 'top' },
+      $parent: {
+        '$vuex+': { baseStoreName: 'top', moduleName: 'deep', storeInstanceName: 'top' },
+        $parent: {
+          '$vuex+': { baseStoreName: 'top', moduleName: 'top', storeInstanceName: 'top' },
+        },
+      },
     };
     expect(api.getFullPath('subsubtree2/path', self)).toEqual(subsubtree2.get.path);
   });
 
   it('Gets full path from local path with known instances', () => {
-    helpers.getInstances.mockReturnValue(['$foo']);
     const self = {
       instance: '',
-      '$vuex+': { baseStoreName: 'top', storeInstanceName: 'top$foo' },
+      '$vuex+': { baseStoreName: 'top', moduleName: 'subsubtree2', storeInstanceName: 'top$foo' },
+      $parent: {
+        '$vuex+': { baseStoreName: 'top', moduleName: 'deep', storeInstanceName: 'top$foo' },
+        $parent: {
+          instance: 'foo',
+          '$vuex+': { baseStoreName: 'top', moduleName: 'top', storeInstanceName: 'top$foo' },
+        },
+      },
     };
     expect(api.getFullPath('subsubtree2/path', self)).toEqual(subsubtree2.get.path.replace('top', 'top$foo'));
   });
 
-  it('Returns full paths from fulls path', () => {
-    helpers.getInstances.mockReturnValue(['$another']);
+  it('Aborts and returns path when root parent misses $vuex+', () => {
     const self = {
       instance: '',
-      '$vuex+': { baseStoreName: 'top', storeInstanceName: 'top' },
+      '$vuex+': { baseStoreName: 'top', moduleName: 'subsubtree2', storeInstanceName: 'top$foo' },
+      $parent: {
+        '$vuex+': { baseStoreName: 'top', moduleName: 'deep', storeInstanceName: 'top$foo' },
+        $parent: {
+          instance: 'foo',
+        },
+      },
     };
-    expect(api.getFullPath('top/subtree$another/path', self)).toEqual('top/subtree$another/path');
-  });
-
-  it('Returns full paths from fulls path with top instance', () => {
-    helpers.getInstances.mockReturnValue(['$foo', '$another']);
-    const self = {
-      instance: '',
-      '$vuex+': { baseStoreName: 'top', storeInstanceName: 'top$foo' },
-    };
-    expect(api.getFullPath('top$foo/subtree$another/path', self)).toEqual('top$foo/subtree$another/path');
-  });
-
-  it('Does not confuse key with instance', () => {
-    helpers.getInstances.mockReturnValue(['$foo']);
-    const self = {
-      instance: '',
-      '$vuex+': { baseStoreName: 'top', storeInstanceName: 'top$foo' },
-    };
-    const originalLogError = console.error;
-    console.error = () => {};
-    expect(api.getFullPath('foo/bar', self)).toEqual(undefined);
-    console.error = originalLogError;
+    expect(api.getFullPath('subsubtree2/path', self)).toEqual(subsubtree2.get.path.replace('top/', ''));
   });
 
   it('Returns undefined and logs error when api.subpath is missing', () => {
-    helpers.getInstances.mockReturnValue(['$foo']);
     const self = {
       instance: '',
       '$vuex+': { baseStoreName: 'top', storeInstanceName: 'top$foo' },
@@ -188,10 +176,9 @@ describe('api.getFullPath', () => {
   });
 
   it('Returns undefined and logs error when no match', () => {
-    helpers.getInstances.mockReturnValue(['$foo']);
     const self = {
       instance: '',
-      '$vuex+': { baseStoreName: 'top', storeInstanceName: 'top$foo' },
+      '$vuex+': { baseStoreName: 'top', moduleName: 'subtree', storeInstanceName: 'top$foo' },
     };
     const originalLogError = console.error;
     console.error = () => {};

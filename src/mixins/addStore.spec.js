@@ -60,6 +60,7 @@ describe('addStore => mixin', () => {
       mixin.created.call(self);
       expect(self['$vuex+']).toEqual({
         baseStoreName: 'foo',
+        moduleName: 'foo',
         storeInstanceName: 'foo',
       });
     });
@@ -71,6 +72,7 @@ describe('addStore => mixin', () => {
       mixin.created.call(self);
       expect(self['$vuex+']).toEqual({
         baseStoreName: 'fooChoo',
+        moduleName: 'fooChoo',
         storeInstanceName: 'fooChoo$bar',
       });
     });

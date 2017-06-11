@@ -30,30 +30,21 @@ beforeEach(() => {
     $store: store,
     '$vuex+': {
       baseStoreName: 'top',
+      moduleName: 'subtree',
       storeInstanceName: 'top',
+    },
+    $parent: {
+      '$vuex+': {
+        baseStoreName: 'top',
+        moduleName: 'top',
+        storeInstanceName: 'top',
+      },
     },
   };
   api.setApi({ top: subapi, top$foo: api.remapBaseStore(subapi, 'top', 'top$foo') });
 });
 
 describe('map.getters', () => {
-  it('should return global getters', () => {
-    const getters = map.getters.call(self, {
-      path: 'top/subtree/path',
-    });
-    expect(getters.path.call(self)).toEqual(store.getters['top/subtree/path']);
-  });
-
-  it('should return global getters with instances', () => {
-    self['$vuex+'].storeInstanceName = 'top$foo';
-    self.instance = 'bar';
-
-    const getters = map.getters.call(self, {
-      path: 'top$foo/subtree$bar/path',
-    });
-    expect(getters.path.call(self)).toEqual(store.getters['top$foo/subtree$bar/path']);
-  });
-
   it('should return local getters', () => {
     const getters = map.getters.call(self, {
       path: 'subtree/path',
@@ -68,27 +59,31 @@ describe('map.getters', () => {
     });
     expect(getters.path.call(self)).toEqual(store.getters['top/subtree$bar/path']);
   });
+
+  it('Returns undefined and logs error when path is missing `/`', () => {
+    const originalLogError = console.error;
+    console.error = () => {};
+    const logError = jest.spyOn(console, 'error');
+    expect(map.getters.call(self, {
+      path: 'subtree',
+    })).toEqual(undefined);
+    expect(logError).toBeCalled();
+    console.error = originalLogError;
+  });
+
+  it('Returns undefined and logs error when path is erronious', () => {
+    const originalLogError = console.error;
+    console.error = () => {};
+    const logError = jest.spyOn(console, 'error');
+    expect(map.getters.call(self, {
+      path: 43,
+    })).toEqual(undefined);
+    expect(logError).toBeCalled();
+    console.error = originalLogError;
+  });
 });
 
 describe('map.actions', () => {
-  it('should return global actions', () => {
-    const actions = map.actions.call(self, {
-      path: 'top/subtree/path',
-    });
-    actions.path.call(self, 13);
-    expect(store.dispatch).toBeCalledWith('top/subtree/path', 13);
-  });
-
-  it('should return global actions with instances', () => {
-    self['$vuex+'].storeInstanceName = 'top$foo';
-    self.instance = 'bar';
-    const actions = map.actions.call(self, {
-      path: 'top$foo/subtree$bar/path',
-    });
-    actions.path.call(self, 42);
-    expect(store.dispatch).toBeCalledWith('top$foo/subtree$bar/path', 42);
-  });
-
   it('should return local actions', () => {
     const actions = map.actions.call(self, {
       path: 'subtree/path',
@@ -102,11 +97,38 @@ describe('map.actions', () => {
     self.instance = 'bar';
     self.$parent = {
       instance: 'foo',
+      '$vuex+': {
+        baseStoreName: 'top',
+        moduleName: 'top',
+        storeInstanceName: 'top$foo',
+      },
     };
     const actions = map.actions.call(self, {
       path: 'subtree/path',
     });
     actions.path.call(self, 99);
     expect(store.dispatch).toBeCalledWith('top$foo/subtree$bar/path', 99);
+  });
+
+  it('Returns undefined and logs error when path is missing `/`', () => {
+    const originalLogError = console.error;
+    console.error = () => {};
+    const logError = jest.spyOn(console, 'error');
+    expect(map.actions.call(self, {
+      path: 'subtree',
+    })).toEqual(undefined);
+    expect(logError).toBeCalled();
+    console.error = originalLogError;
+  });
+
+  it('Returns undefined and logs error when path is erronious', () => {
+    const originalLogError = console.error;
+    console.error = () => {};
+    const logError = jest.spyOn(console, 'error');
+    expect(map.actions.call(self, {
+      path: 43,
+    })).toEqual(undefined);
+    expect(logError).toBeCalled();
+    console.error = originalLogError;
   });
 });
