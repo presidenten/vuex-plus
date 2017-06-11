@@ -14,6 +14,15 @@ export function setup(newImporter) {
 }
 
 /**
+ * HMR Handler that returns new instance store on hmr
+ * @param       {function} getNewInstanceStore Wrapped addStore with module information
+ * @returns     {function} Function to make new instance
+ */
+export function HmrHandler(getNewInstanceStore) {
+  return newLoadedModule => getNewInstanceStore(newLoadedModule);
+}
+
+/**
  * Add a new store instance
  * The Vue component gets two props:
  * - instance {string}: Contains the instance name
@@ -24,9 +33,6 @@ export function setup(newImporter) {
 export default function add(baseStoreName) {
   const loadedModule = importer.getModules()[baseStoreName];
   const counter = {};
-  function HmrHandler(instanceName, getNewInstanceStore) {
-    return newLoadedModule => getNewInstanceStore(newLoadedModule);
-  }
 
   return {
     props: ['instance', 'preserve'],
@@ -50,7 +56,7 @@ export default function add(baseStoreName) {
         api[this['$vuex+'].storeInstanceName] = remappedApi;
 
         if (module.hot) {
-          this.$hmrHandler = new HmrHandler(this['$vuex+'].storeInstanceName, getNewInstanceStore);
+          this.$hmrHandler = new HmrHandler(getNewInstanceStore);
           registerForHMR(this.$hmrHandler, baseStoreName, this['$vuex+'].storeInstanceName);
         }
       }

@@ -115,4 +115,13 @@ describe('addStore => mixin', () => {
       expect(self.$store.unregisterModule).toBeCalledWith('foo');
     });
   });
+
+  describe('HMR Handler', () => {
+    it('Generates instanciator for new modules with wrapped method', () => {
+      const instanceMethod = jest.fn();
+      const hmrHandler = new addStoreModule.HmrHandler(instanceMethod);
+      hmrHandler(42);
+      expect(instanceMethod).toBeCalledWith(42);
+    });
+  });
 });
