@@ -91,53 +91,6 @@ export const getLocalPath = (path, state) => {
 };
 
 /**
- * Support method that gets tag name for error logs
- * @param  {Object} self Vue component `.this`
- * @return {string}      <tag-name>
- */
-export const getTagName = (self) => {
-  let tag = 'unknown-tag';
-  if (self.$parent) {
-    const vnode = self.$parent.$vnode || self.$parent._vnode; // eslint-disable-line
-
-    if (vnode && vnode.componentOptions && vnode.componentOptions.tag) {
-      tag = vnode.componentOptions.tag;
-    }
-  }
-  return '<' + tag + '>';
-};
-
-/**
- * Returns all instances in the current instance branch as an ordered array
- * @param  {string} subpath The subpath to explore
- * @param  {Object} self    Vue component `.this`
- * @return {array}          The instances as array
- */
-export const getInstances = (subpath, self) => {
-  let path = self.instance ? '/$' + self.instance : '';
-  let parent = self;
-
-  while (parent.$parent) {
-    parent = parent.$parent;
-    const suffix = parent.instance ? '$' + parent.instance + '/' : '';
-    if (suffix) path = suffix + path;
-  }
-
-  const instances = path === '' ? [] : path.split('/').filter(i => i.length);
-
-  if (subpath) {
-    const subInstances = subpath.match(/\$\w+/g);
-    if (subInstances) {
-      subInstances.forEach((instance) => {
-        instances.push(instance);
-      });
-    }
-  }
-
-  return instances;
-};
-
-/**
  * Returns subInstances from local path
  * @param  {string} path Path to explore
  * @return {array}       Subinstances as ordered array
