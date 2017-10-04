@@ -56,9 +56,11 @@ Check out the extensive tutorial bundled with the example:
     new Vue({
       el: '#app',
       store,
-      render: h => h(require('./app.vue')), // Start application
+      render: h => h(require('./app.vue').default), // Start application
     });
 ```
+
+If using vue-loader < v13.0.0, skip `.default` on the render line.
 
 ---
 
