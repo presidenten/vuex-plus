@@ -19,6 +19,10 @@ module.exports = {
   },
   // add your custom rules here
   'rules': {
+    'function-paren-newline': 0,
+    'no-multi-spaces': 0,
+    'object-curly-newline': 0,
+    'prefer-destructuring': 0,
     'no-param-reassign': 0,
     'no-mixed-operators': 0,
     'no-unused-vars': 1,
