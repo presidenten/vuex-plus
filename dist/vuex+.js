@@ -363,7 +363,7 @@ function add(baseStoreName) {
       counter[this['$vuex+'].storeInstanceName]++;
 
       var getNewInstanceStore = function (newLoadedModule) { return newStore(this$1['$vuex+'].storeInstanceName, this$1.instance,
-                                                              baseStoreName, newLoadedModule); };
+        baseStoreName, newLoadedModule); };
 
       var store = getNewInstanceStore(loadedModule);
       if (!this.$store._modules.root._children[this['$vuex+'].storeInstanceName]) { // eslint-disable-line
