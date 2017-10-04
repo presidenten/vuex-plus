@@ -47,7 +47,7 @@ export default function add(baseStoreName) {
       counter[this['$vuex+'].storeInstanceName]++;
 
       const getNewInstanceStore = newLoadedModule => newStore(this['$vuex+'].storeInstanceName, this.instance,
-                                                              baseStoreName, newLoadedModule);
+        baseStoreName, newLoadedModule);
 
       const store = getNewInstanceStore(loadedModule);
       if (!this.$store._modules.root._children[this['$vuex+'].storeInstanceName]) { // eslint-disable-line
