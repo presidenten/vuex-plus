@@ -6,7 +6,7 @@ export default {
   install(Vue) {
     Vue.mixin({
       props: ['instance'],
-      created() {
+      beforeCreate() {
         const findModuleName = (parent) => {
           if (!this['$vuex+'] && parent.$parent) {
             if (!parent.$parent['$vuex+']) {
