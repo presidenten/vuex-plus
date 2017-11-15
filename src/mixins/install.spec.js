@@ -35,7 +35,7 @@ describe('install', () => {
     };
 
     installModule.install(Vue);
-    mixin.created.call(self);
+    mixin.beforeCreate.call(self);
 
     expect(self['$vuex+']).toEqual({
       baseStoreName: 'foo',
@@ -60,7 +60,7 @@ describe('install', () => {
     };
 
     installModule.install(Vue);
-    mixin.created.call(self);
+    mixin.beforeCreate.call(self);
 
     expect(self['$vuex+']).toEqual({
       baseStoreName: 'foo',
