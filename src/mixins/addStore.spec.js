@@ -39,7 +39,7 @@ beforeEach(() => {
   };
   addStoreModule.setup(importer);
 
-  importer.getModules.mockReturnValue({ 'foo-store': module });
+  importer.getModules.mockReturnValue({ 'foo-store': module, 'bar-store': module });
 });
 
 describe('addStore => mixin', () => {
@@ -92,29 +92,29 @@ describe('addStore => mixin', () => {
 
   describe('mixin.destroyed', () => {
     it('removes stores without preseve=true', () => {
-      const mixin = addStore.call(self, 'foo-store');
+      const mixin = addStore.call(self, 'bar-store');
       mixin.created.call(self);
       mixin.destroyed.call(self);
-      expect(self.$store.unregisterModule).toBeCalledWith('foo');
+      expect(self.$store.unregisterModule).toBeCalledWith('bar');
     });
 
     it('keeps stores with preseve=true', () => {
       self.preserve = true;
-      const mixin = addStore.call(self, 'foo-store');
+      const mixin = addStore.call(self, 'bar-store');
       mixin.created.call(self);
       mixin.destroyed.call(self);
-      expect(self.$store.unregisterModule).not.toBeCalledWith('foo');
+      expect(self.$store.unregisterModule).not.toBeCalledWith('bar');
     });
 
     it('removes stores without preseve=true, when no instances left', () => {
-      const mixin = addStore.call(self, 'foo-store');
+      const mixin = addStore.call(self, 'bar-store');
       mixin.created.call(self);
       mixin.created.call(self);
       mixin.destroyed.call(self);
-      expect(self.$store.unregisterModule).not.toBeCalledWith('foo');
+      expect(self.$store.unregisterModule).not.toBeCalledWith('bar');
 
       mixin.destroyed.call(self);
-      expect(self.$store.unregisterModule).toBeCalledWith('foo');
+      expect(self.$store.unregisterModule).toBeCalledWith('bar');
     });
   });
 

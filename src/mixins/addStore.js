@@ -4,6 +4,9 @@ import { getStoreInstanceName, toCamelCase } from '../common/helpers.js';
 import { registerForHMR, unregisterForHMR } from '../common/hmrHandler.js';
 
 let importer;
+// Keep track of number of active instances
+const activeInstances = {};
+
 
 /**
  * Setup module with new importer from webpack-context-vuex-hmr
@@ -32,7 +35,6 @@ export function HmrHandler(getNewInstanceStore) {
  */
 export default function add(baseStoreName) {
   const loadedModule = importer.getModules()[baseStoreName];
-  const counter = {};
 
   return {
     props: ['instance', 'preserve'],
@@ -43,8 +45,8 @@ export default function add(baseStoreName) {
         moduleName: baseStoreName,
         storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
       };
-      counter[this['$vuex+'].storeInstanceName] = counter[this['$vuex+'].storeInstanceName] || 0;
-      counter[this['$vuex+'].storeInstanceName]++;
+      activeInstances[this['$vuex+'].storeInstanceName] = activeInstances[this['$vuex+'].storeInstanceName] || 0;
+      activeInstances[this['$vuex+'].storeInstanceName]++;
 
       const getNewInstanceStore = newLoadedModule => newStore(this['$vuex+'].storeInstanceName, this.instance,
         baseStoreName, newLoadedModule);
@@ -64,9 +66,9 @@ export default function add(baseStoreName) {
     },
 
     destroyed() {
-      counter[this['$vuex+'].storeInstanceName]--;
+      activeInstances[this['$vuex+'].storeInstanceName]--;
 
-      if (!this.preserve && counter[this['$vuex+'].storeInstanceName] === 0) {
+      if (!this.preserve && activeInstances[this['$vuex+'].storeInstanceName] === 0) {
         this.$store.unregisterModule(this['$vuex+'].storeInstanceName);
 
         if (module.hot) {
