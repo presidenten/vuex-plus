@@ -19,9 +19,14 @@ export default {
    * @param {Object} state - Optional local vuex state. Set it when searching in same instance.
    * @returns {any} - Value from Vuex getter
    */
-  get({ path, state }) {
+  get({ path, state, vnode }) {
     if (state) {
       const localPath = getLocalPath(path, state);
+      return vuexInstance.store.getters[localPath];
+    }
+
+    if (vnode) {
+      const localPath = path.replace(/^\$root/, vnode['$vuex+'].storeInstanceName);
       return vuexInstance.store.getters[localPath];
     }
 
@@ -36,11 +41,17 @@ export default {
    * @param {Object} state - Optional local vuex state. Set it when searching in same instance.
    * @returns {any} - Value from Vuex action
    */
-  dispatch({ path, data, state }) {
+  dispatch({ path, data, state, vnode }) {
     if (state) {
       const localPath = getLocalPath(path, state);
       return vuexInstance.store.dispatch(localPath, data);
     }
+
+    if (vnode) {
+      const localPath = path.replace(/^\$root/, vnode['$vuex+'].storeInstanceName);
+      return vuexInstance.store.dispatch(localPath, data);
+    }
+
 
     return vuexInstance.store.dispatch(path, data);
   },
@@ -53,9 +64,14 @@ export default {
    * @param {Object} state - Optional local vuex state. Set it when searching in same instance.
    * @returns {any} - Value from Vuex mutation
    */
-  commit({ path, data, state }) {
+  commit({ path, data, state, vnode }) {
     if (state) {
       const localPath = getLocalPath(path, state);
+      return vuexInstance.store.commit(localPath, data);
+    }
+
+    if (vnode) {
+      const localPath = path.replace(/^\$root/, vnode['$vuex+'].storeInstanceName);
       return vuexInstance.store.commit(localPath, data);
     }
 

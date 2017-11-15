@@ -3,6 +3,7 @@ import * as api from './api.js';
 import vuexInstance from '../vuexInstance.js';
 
 let state;
+let vnode;
 beforeEach(() => {
   vuexInstance.store = {
     getters: {
@@ -21,6 +22,13 @@ beforeEach(() => {
       rootInstance: 'chuu',
     },
   };
+
+  vnode = {
+    '$vuex+': {
+      storeInstanceName: 'foo$chuu',
+    },
+  };
+
   const parentState = {
     choo$test: state,
     bar: 3,
@@ -63,6 +71,9 @@ describe('root.get', () => {
   it('returns getter value for $root path', () => {
     expect(root.get({ path: '$root/bar', state })).toEqual('local getter');
   });
+  it('returns getter value for $root path in vue components', () => {
+    expect(root.get({ path: '$root/bar', vnode })).toEqual('local getter');
+  });
   it('returns getter value for $parent path', () => {
     expect(root.get({ path: '$parent/bar', state })).toEqual('local getter');
   });
@@ -75,6 +86,10 @@ describe('root.dispatch', () => {
   });
   it('returns resulting action value for $root path', () => {
     root.dispatch({ path: '$root/bar', data: 'huu', state });
+    expect(vuexInstance.store.dispatch).toBeCalledWith('foo$chuu/bar', 'huu');
+  });
+  it('returns resulting action value for $root path in vue components', () => {
+    root.dispatch({ path: '$root/bar', data: 'huu', vnode });
     expect(vuexInstance.store.dispatch).toBeCalledWith('foo$chuu/bar', 'huu');
   });
   it('returns resulting action value for $parent path', () => {
@@ -90,6 +105,10 @@ describe('root.commit', () => {
   });
   it('returns resulting action value for $root path', () => {
     root.commit({ path: '$root/bar', data: 'huu', state });
+    expect(vuexInstance.store.commit).toBeCalledWith('foo$chuu/bar', 'huu');
+  });
+  it('returns resulting action value for $root path in vue componentsq', () => {
+    root.commit({ path: '$root/bar', data: 'huu', vnode });
     expect(vuexInstance.store.commit).toBeCalledWith('foo$chuu/bar', 'huu');
   });
   it('returns resulting action value for $parent path', () => {
