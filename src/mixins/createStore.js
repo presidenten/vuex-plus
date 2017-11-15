@@ -9,7 +9,7 @@ import vuexInstance from '../vuexInstance.js';
  * @param {Object} store - The base store name, same as in `store({ name })`
  * @returns {Object} Vuex module store with submodules
  */
-export default function newStore(storeInstanceName, instance, baseStoreName, store, parent) {
+export default function createStore(storeInstanceName, instance, baseStoreName, store, parent) {
   const resultingStore = {
     namespaced: true,
   };
@@ -29,6 +29,7 @@ export default function newStore(storeInstanceName, instance, baseStoreName, sto
   if (instance) {
     resultingStore.state['vuex+'].rootInstance = instance;
   }
+
   resultingStore.state['vuex+'].storeName = baseStoreName;
   ['actions', 'getters', 'mutations'].forEach((type) => {
     if (store[type]) {
@@ -42,7 +43,7 @@ export default function newStore(storeInstanceName, instance, baseStoreName, sto
   if (resultingStore.modules) {
     resultingStore.modules = {};
     Object.keys(store.modules).forEach((subInstanceName) => {
-      resultingStore.modules[subInstanceName] = newStore(storeInstanceName, instance, baseStoreName, store.modules[subInstanceName], resultingStore.state); // eslint-disable-line
+      resultingStore.modules[subInstanceName] = createStore(storeInstanceName, instance, baseStoreName, store.modules[subInstanceName], resultingStore.state); // eslint-disable-line
     });
   }
 

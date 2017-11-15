@@ -1,5 +1,5 @@
 import contextHmr from 'webpack-context-vuex-hmr';
-import { setup } from './addStore.js';
+import { setup } from './register.js';
 import { hmrHandler } from '../common/hmrHandler.js';
 import vuexInstance from '../vuexInstance.js';
 import { toCamelCase } from '../common/helpers.js';

@@ -1,7 +1,7 @@
-import newStore from './newStore.js';
+import createStore from './createStore.js';
 import * as vuexInstance from '../vuexInstance.js';
 
-describe('newStore', () => {
+describe('createStore', () => {
   let store;
   beforeEach(() => {
     vuexInstance.default.store = {};
@@ -73,13 +73,13 @@ describe('newStore', () => {
   });
 
   it('sets `namespaced=true`', () => {
-    const freshStore = newStore('foo$test', 'test', 'foo', store);
+    const freshStore = createStore('foo$test', 'test', 'foo', store);
 
     expect(freshStore.namespaced).toEqual(true);
   });
 
   it('clones and decorates store state with \'[vuex+]\'', () => {
-    const freshStore = newStore('foo$test', 'test', 'foo', store);
+    const freshStore = createStore('foo$test', 'test', 'foo', store);
 
     expect(store.state).toEqual({
       count: 3,
@@ -94,7 +94,7 @@ describe('newStore', () => {
   });
 
   it('clones and decorates module states with \'$parent\'', () => {
-    const freshStore = newStore('foo$test', 'test', 'foo', store);
+    const freshStore = createStore('foo$test', 'test', 'foo', store);
 
     expect(freshStore.state.$parent).toEqual(undefined);
     expect(freshStore.modules.bar.state.$parent).toEqual(freshStore.state);
@@ -102,7 +102,7 @@ describe('newStore', () => {
   });
 
   it('clones all other store properties', () => {
-    const freshStore = newStore('foo$test', 'test', 'foo', store);
+    const freshStore = createStore('foo$test', 'test', 'foo', store);
 
     expect(freshStore.getters).not.toBe(undefined);
     expect(freshStore.getters).not.toBe(store.getters);
@@ -115,7 +115,7 @@ describe('newStore', () => {
   });
 
   it('clones and prepare handles submodules', () => {
-    const freshStore = newStore('foo$test', 'test', 'foo', store);
+    const freshStore = createStore('foo$test', 'test', 'foo', store);
 
     expect(freshStore.modules.bar.getters).not.toBe(undefined);
     expect(freshStore.modules.bar.getters).not.toBe(store.modules.bar.getters);

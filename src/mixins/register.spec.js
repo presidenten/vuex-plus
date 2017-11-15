@@ -1,10 +1,9 @@
-import * as addStoreModule from './addStore.js';
-import * as apiModule from '../api/api.js';
+import * as registerModule from './register.js';
 import * as vuexInstance from '../vuexInstance.js';
 
 global.module = { hot: jest.fn() };
 
-const addStore = addStoreModule.default;
+const register = registerModule.default;
 const importer = {
   getModules: jest.fn(),
 };
@@ -37,91 +36,82 @@ beforeEach(() => {
       },
     },
   };
-  addStoreModule.setup(importer);
+  registerModule.setup(importer);
 
-  importer.getModules.mockReturnValue({ 'foo-store': module, 'bar-store': module });
+  importer.getModules.mockReturnValue({ 'foo-store': module });
 });
 
-describe('addStore => mixin', () => {
+describe('register => mixin', () => {
   it('exposes props', () => {
-    const result = addStore('foo-store');
+    const result = register('foo-store');
     expect(result.props).toEqual(['instance', 'preserve']);
   });
 
   describe('mixin.created', () => {
     it('adds registers module on $store', () => {
-      const mixin = addStore('foo-store');
+      const mixin = register('foo-store');
       mixin.created.call(self);
       expect(self.$store.registerModule).toBeCalled();
+      mixin.destroyed.call(self);
     });
 
     it('adds $vuex+ propery', () => {
-      const mixin = addStore.call(self, 'foo-store');
+      const mixin = register.call(self, 'foo-store');
       mixin.created.call(self);
       expect(self['$vuex+']).toEqual({
         baseStoreName: 'foo',
         moduleName: 'foo',
         storeInstanceName: 'foo',
       });
+      mixin.destroyed.call(self);
     });
 
     it('adds $vuex+ propery with camel cased instance', () => {
       importer.getModules.mockReturnValue({ 'foo-choo-store': module });
       self.instance = 'bar';
-      const mixin = addStore.call(self, 'foo-choo-store');
+      const mixin = register.call(self, 'foo-choo-store');
       mixin.created.call(self);
       expect(self['$vuex+']).toEqual({
         baseStoreName: 'fooChoo',
         moduleName: 'fooChoo',
         storeInstanceName: 'fooChoo$bar',
       });
-    });
-
-    it('updates api with base and instance', () => {
-      self.instance = 'chu';
-      const mixin = addStore.call(self, 'foo-store');
-      mixin.created.call(self);
-      expect(apiModule.api.foo).toEqual($api);
-      expect(apiModule.api.foo$chu).toEqual({
-        get: { bar: 'foo$chu/bar' },
-        act: { bar: 'foo$chu/bar' },
-        mutate: { bar: 'foo$chu/bar' },
-      });
+      mixin.destroyed.call(self);
     });
   });
 
   describe('mixin.destroyed', () => {
     it('removes stores without preseve=true', () => {
-      const mixin = addStore.call(self, 'bar-store');
+      const mixin = register.call(self, 'foo-store');
       mixin.created.call(self);
       mixin.destroyed.call(self);
-      expect(self.$store.unregisterModule).toBeCalledWith('bar');
+      expect(self.$store.unregisterModule).toBeCalledWith('foo');
     });
 
     it('keeps stores with preseve=true', () => {
       self.preserve = true;
-      const mixin = addStore.call(self, 'bar-store');
+      const mixin = register.call(self, 'foo-store');
       mixin.created.call(self);
       mixin.destroyed.call(self);
-      expect(self.$store.unregisterModule).not.toBeCalledWith('bar');
+      expect(self.$store.unregisterModule).not.toBeCalledWith('foo');
     });
 
     it('removes stores without preseve=true, when no instances left', () => {
-      const mixin = addStore.call(self, 'bar-store');
+      const mixin = register.call(self, 'foo-store');
       mixin.created.call(self);
       mixin.created.call(self);
       mixin.destroyed.call(self);
-      expect(self.$store.unregisterModule).not.toBeCalledWith('bar');
+      expect(self.$store.unregisterModule).not.toBeCalledWith('foo');
 
       mixin.destroyed.call(self);
-      expect(self.$store.unregisterModule).toBeCalledWith('bar');
+      expect(self.$store.unregisterModule).toBeCalledWith('foo');
     });
   });
 
   describe('HMR Handler', () => {
     it('Generates instanciator for new modules with wrapped method', () => {
       const instanceMethod = jest.fn();
-      const hmrHandler = new addStoreModule.HmrHandler(instanceMethod);
+      const hmrHandler = new registerModule.HmrHandler(instanceMethod);
       hmrHandler(42);
       expect(instanceMethod).toBeCalledWith(42);
     });

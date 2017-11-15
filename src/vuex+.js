@@ -5,7 +5,7 @@ import setupVuexPlus from './mixins/setupVuexPlus.js';
 
 import _map from './api/map.js';
 import _root from './api/root.js';
-import _addStore from './mixins/addStore.js';
+import _register from './mixins/register.js';
 import _vuePluginInstall from './mixins/install.js';
 
 export const map = _map;
@@ -17,7 +17,7 @@ export const store = (s) => {
 };
 export const newInstance = clone;
 export const root = _root;
-export const register = _addStore;
+export const register = _register;
 export const hmrCallback = hmrHandler;
 
 export default {
