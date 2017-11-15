@@ -21,11 +21,13 @@ const generateMappingFunction = (method, mappingVuexPaths) => {
       }
       const path = getFullPath(mappingVuexPaths[key], this);
       if (method === 'getters') {
+        result[key].vuex = true; // Mark getter for devtools
         return this.$store[method][path];
       }
       return this.$store[method](path, payload);
     };
   });
+
   return result;
 };
 
