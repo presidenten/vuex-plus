@@ -318,6 +318,9 @@ function newStore(storeInstanceName, instance, baseStoreName, store, parent) {
 }
 
 var importer;
+// Keep track of number of active instances
+var activeInstances = {};
+
 
 /**
  * Setup module with new importer from webpack-context-vuex-hmr
@@ -346,7 +349,6 @@ function HmrHandler(getNewInstanceStore) {
  */
 function add(baseStoreName) {
   var loadedModule = importer.getModules()[baseStoreName];
-  var counter = {};
 
   return {
     props: ['instance', 'preserve'],
@@ -359,8 +361,8 @@ function add(baseStoreName) {
         moduleName: baseStoreName,
         storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
       };
-      counter[this['$vuex+'].storeInstanceName] = counter[this['$vuex+'].storeInstanceName] || 0;
-      counter[this['$vuex+'].storeInstanceName]++;
+      activeInstances[this['$vuex+'].storeInstanceName] = activeInstances[this['$vuex+'].storeInstanceName] || 0;
+      activeInstances[this['$vuex+'].storeInstanceName]++;
 
       var getNewInstanceStore = function (newLoadedModule) { return newStore(this$1['$vuex+'].storeInstanceName, this$1.instance,
         baseStoreName, newLoadedModule); };
@@ -380,9 +382,9 @@ function add(baseStoreName) {
     },
 
     destroyed: function destroyed() {
-      counter[this['$vuex+'].storeInstanceName]--;
+      activeInstances[this['$vuex+'].storeInstanceName]--;
 
-      if (!this.preserve && counter[this['$vuex+'].storeInstanceName] === 0) {
+      if (!this.preserve && activeInstances[this['$vuex+'].storeInstanceName] === 0) {
         this.$store.unregisterModule(this['$vuex+'].storeInstanceName);
 
         if (module.hot) {
@@ -432,11 +434,13 @@ var generateMappingFunction = function (method, mappingVuexPaths) {
       }
       var path = getFullPath(mappingVuexPaths[key], this);
       if (method === 'getters') {
+        result[key].vuex = true; // Mark getter for devtools
         return this.$store[method][path];
       }
       return this.$store[method](path, payload);
     };
   });
+
   return result;
 };
 
@@ -481,10 +485,16 @@ var _root = {
   get: function get(ref) {
     var path = ref.path;
     var state = ref.state;
+    var vnode = ref.vnode;
 
     if (state) {
       var localPath = getLocalPath(path, state);
       return vuexInstance.store.getters[localPath];
+    }
+
+    if (vnode) {
+      var localPath$1 = path.replace(/^\$root/, vnode['$vuex+'].storeInstanceName);
+      return vuexInstance.store.getters[localPath$1];
     }
 
     return vuexInstance.store.getters[path];
@@ -502,11 +512,18 @@ var _root = {
     var path = ref.path;
     var data = ref.data;
     var state = ref.state;
+    var vnode = ref.vnode;
 
     if (state) {
       var localPath = getLocalPath(path, state);
       return vuexInstance.store.dispatch(localPath, data);
     }
+
+    if (vnode) {
+      var localPath$1 = path.replace(/^\$root/, vnode['$vuex+'].storeInstanceName);
+      return vuexInstance.store.dispatch(localPath$1, data);
+    }
+
 
     return vuexInstance.store.dispatch(path, data);
   },
@@ -523,10 +540,16 @@ var _root = {
     var path = ref.path;
     var data = ref.data;
     var state = ref.state;
+    var vnode = ref.vnode;
 
     if (state) {
       var localPath = getLocalPath(path, state);
       return vuexInstance.store.commit(localPath, data);
+    }
+
+    if (vnode) {
+      var localPath$1 = path.replace(/^\$root/, vnode['$vuex+'].storeInstanceName);
+      return vuexInstance.store.commit(localPath$1, data);
     }
 
     return vuexInstance.store.commit(path, data);
@@ -624,7 +647,7 @@ var _vuePluginInstall = {
   install: function install(Vue) {
     Vue.mixin({
       props: ['instance'],
-      created: function created() {
+      beforeCreate: function beforeCreate() {
         var this$1 = this;
 
         var findModuleName = function (parent) {
