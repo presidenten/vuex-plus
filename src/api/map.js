@@ -1,5 +1,5 @@
 
-import { getFullPath } from './api.js';
+import { getFullPath } from '../common/helpers.js';
 
 const generateMappingFunction = (method, mappingVuexPaths) => {
   const result = {};

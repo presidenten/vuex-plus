@@ -11,6 +11,20 @@ function findModuleNameFromParent(state) {
   }
 }
 
+function expandPath(self, path) {
+  if (self['$vuex+']) {
+    const instance = self.instance ? '$' + self.instance : '';
+    if (self['$vuex+'].moduleName && self['$vuex+'].moduleName === self['$vuex+'].baseStoreName) {
+      return self['$vuex+'].moduleName + instance + '/' + path;
+    }
+
+    const moduleName = self['$vuex+'].moduleName ? self['$vuex+'].moduleName + instance + '/' : '';
+    return expandPath(self.$parent, moduleName + path);
+  }
+
+  return path;
+}
+
 /**
  * Combines info from ['vuex+'] property to root store name with instance
  * @param  {object} state Vuex modules state
@@ -42,6 +56,40 @@ function findPath(state, path = '') {
   }
   return path;
 }
+
+
+/**
+ * Input subpath and figure out full path
+ * @param  {string} subpath The subpath to start from
+ * @param  {Object} self    Vue component `.this`
+ * @return {string}         Full path
+ */
+export const getFullPath = (subpath, self) => {
+  if (!subpath || subpath.indexOf('/') < 0) {
+    console.error('[Vuex+]: Cant calculate path', subpath, 'for', self);
+    return undefined;
+  }
+
+  const proposedModuleName = subpath.slice(0, subpath.indexOf('/'));
+  let moduleName = self['$vuex+'].moduleName;
+  if (!moduleName) {
+    moduleName = proposedModuleName;
+  }
+
+  if (proposedModuleName !== moduleName) {
+    console.error('[Vuex+]: Trying to find path', subpath, 'outside module ', moduleName);
+    return undefined;
+  }
+
+  const instance = self.instance ? '$' + self.instance : '';
+  let path = moduleName + instance + subpath.slice(subpath.indexOf('/'));
+
+  if (moduleName !== self['$vuex+'].baseStoreName) {
+    path = expandPath(self.$parent, path);
+  }
+
+  return path;
+};
 
 /**
  * Get store instance name

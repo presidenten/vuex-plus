@@ -15,8 +15,8 @@ export default function setupVuexPlus($store) {
   const modules = importer.getModules();
   // Add normal vuex modules
   Object.keys(modules).forEach((moduleName) => {
-    if (!modules[moduleName].$api && !modules[moduleName].api) {
-      const baseStoreName = toCamelCase(moduleName.replace(/-store$/, ''));
+    const baseStoreName = toCamelCase(moduleName.replace(/-store$/, ''));
+    if (!modules[moduleName].state || (modules[moduleName].state && !modules[moduleName].state['vuex+'])) {
       $store.registerModule(baseStoreName, modules[moduleName]);
     }
   });

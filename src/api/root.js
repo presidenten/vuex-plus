@@ -1,17 +1,7 @@
-import clone from 'clone';
-import { api } from './api.js';
 import { getLocalPath } from '../common/helpers.js';
 import vuexInstance from '../vuexInstance.js';
 
 export default {
-  /**
-   * Get the whole global api
-   * @return {Object} Global api
-   */
-  get api() {
-    return clone(api);
-  },
-
   /**
    * Method that returns a getter.
    * Only set `state` when getting from same instance

@@ -1,4 +1,3 @@
-import { api, remapBaseStore } from '../api/api.js';
 import { toCamelCase } from './helpers.js';
 import vuexInstance from '../vuexInstance.js';
 
@@ -56,12 +55,6 @@ export const hmrHandler = (updatedModules) => {
     if (moduleLength === Object.keys(modules).length) {
       modules[toCamelCase(key.replace(/-store$/, ''))] = updatedModules[key];
     }
-
-    Object.keys(modules).forEach((m) => {
-      if (modules[m].$api) {
-        api[m] = remapBaseStore(modules[m].$api, modules[m].name, m);
-      }
-    });
 
     vuexInstance.store.hotUpdate({ modules });
   });

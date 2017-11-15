@@ -1,5 +1,4 @@
 import root from './root.js';
-import * as api from './api.js';
 import vuexInstance from '../vuexInstance.js';
 
 let state;
@@ -52,14 +51,6 @@ beforeEach(() => {
     get() {
       return topState;
     },
-  });
-});
-
-describe('root.api', () => {
-  it('returns the api', () => {
-    const newApi = { id: 42 };
-    api.setApi(newApi);
-    expect(root.api).toEqual(newApi);
   });
 });
 

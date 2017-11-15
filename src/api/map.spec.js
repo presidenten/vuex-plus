@@ -1,8 +1,6 @@
 import map from './map.js';
-import * as api from './api.js';
 
 let store;
-let subapi;
 let self;
 
 beforeEach(() => {
@@ -13,17 +11,6 @@ beforeEach(() => {
       'top$foo/subtree$bar/path': 'the getter with instance',
     },
     dispatch: jest.fn(),
-  };
-
-  subapi = {
-    subtree: {
-      get: { path: 'top/subtree/path' },
-      act: { path: 'top/subtree/path' },
-    },
-    subtree$bar: {
-      get: { path: 'top/subtree$bar/path' },
-      act: { path: 'top/subtree$bar/path' },
-    },
   };
 
   self = {
@@ -41,7 +28,6 @@ beforeEach(() => {
       },
     },
   };
-  api.setApi({ top: subapi, top$foo: api.remapBaseStore(subapi, 'top', 'top$foo') });
 });
 
 describe('map.getters', () => {
