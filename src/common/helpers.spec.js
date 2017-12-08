@@ -207,4 +207,30 @@ describe('helpers.getFullPath', () => {
     expect(logError).toBeCalled();
     console.error = originalLogError;
   });
+
+  it('Allows $root as pointer to top of instance tree', () => {
+    const self = {
+      instance: '',
+      '$vuex+': { baseStoreName: 'top', moduleName: 'subtree', storeInstanceName: 'top' },
+      $parent: {
+        '$vuex+': { baseStoreName: 'top', moduleName: 'top', storeInstanceName: 'top' },
+      },
+    };
+    expect(helpers.getFullPath('$root/subtree/path', self)).toEqual(subtree.get.path);
+  });
+
+  it('Allows $root as pointer to top of instance tree with matching root instance', () => {
+    const self = {
+      instance: '',
+      '$vuex+': { baseStoreName: 'top', moduleName: 'subsubtree', storeInstanceName: 'top$foo' },
+      $parent: {
+        '$vuex+': { baseStoreName: 'top', moduleName: 'deep', storeInstanceName: 'top$foo' },
+        $parent: {
+          instance: 'foo',
+          '$vuex+': { baseStoreName: 'top', moduleName: 'top', storeInstanceName: 'top$foo' },
+        },
+      },
+    };
+    expect(helpers.getFullPath('$root/subtree/path', self)).toEqual(subtree.get.path.replace('top', 'top$foo'));
+  });
 });

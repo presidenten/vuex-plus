@@ -70,6 +70,10 @@ export const getFullPath = (subpath, self) => {
     return undefined;
   }
 
+  if (subpath.slice(0, 6) === '$root/') {
+    return subpath.replace(/^\$root/, self['$vuex+'].storeInstanceName);
+  }
+
   const proposedModuleName = subpath.slice(0, subpath.indexOf('/'));
   let moduleName = self['$vuex+'].moduleName;
   if (!moduleName) {
