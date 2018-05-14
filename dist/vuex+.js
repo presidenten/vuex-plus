@@ -301,19 +301,19 @@ function register$1(baseStoreName) {
 
   return {
     props: ['instance', 'preserve'],
-    created: function created() {
+    beforeCreate: function beforeCreate() {
       var this$1 = this;
 
       baseStoreName = toCamelCase(baseStoreName.replace(/-store$/, ''));
       this['$vuex+'] = {
         baseStoreName: baseStoreName,
         moduleName: baseStoreName,
-        storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
+        storeInstanceName: getStoreInstanceName(baseStoreName, this.$options.propsData.instance),
       };
       activeInstances[this['$vuex+'].storeInstanceName] = activeInstances[this['$vuex+'].storeInstanceName] || 0;
       activeInstances[this['$vuex+'].storeInstanceName]++;
 
-      var getNewInstanceStore = function (newLoadedModule) { return createStore(this$1['$vuex+'].storeInstanceName, this$1.instance,
+      var getNewInstanceStore = function (newLoadedModule) { return createStore(this$1['$vuex+'].storeInstanceName, this$1.$options.propsData.instance,
         baseStoreName, newLoadedModule); };
 
       var store = getNewInstanceStore(loadedModule);

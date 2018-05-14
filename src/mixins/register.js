@@ -36,17 +36,17 @@ export default function register(baseStoreName) {
 
   return {
     props: ['instance', 'preserve'],
-    created() {
+    beforeCreate() {
       baseStoreName = toCamelCase(baseStoreName.replace(/-store$/, ''));
       this['$vuex+'] = {
         baseStoreName,
         moduleName: baseStoreName,
-        storeInstanceName: getStoreInstanceName(baseStoreName, this.instance),
+        storeInstanceName: getStoreInstanceName(baseStoreName, this.$options.propsData.instance),
       };
       activeInstances[this['$vuex+'].storeInstanceName] = activeInstances[this['$vuex+'].storeInstanceName] || 0;
       activeInstances[this['$vuex+'].storeInstanceName]++;
 
-      const getNewInstanceStore = newLoadedModule => createStore(this['$vuex+'].storeInstanceName, this.instance,
+      const getNewInstanceStore = newLoadedModule => createStore(this['$vuex+'].storeInstanceName, this.$options.propsData.instance,
         baseStoreName, newLoadedModule);
 
       const store = getNewInstanceStore(loadedModule);
