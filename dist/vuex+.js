@@ -252,7 +252,7 @@ function createStore(storeInstanceName, instance, baseStoreName, store, parent) 
     if (store[type]) {
       resultingStore[type] = {};
       Object.keys(store[type]).forEach(function (name) {
-        var newName = name.replace(baseStoreName, storeInstanceName);
+        var newName = name.replace(baseStoreName + '/', storeInstanceName + '/');
         resultingStore[type][newName] = store[type][name];
       });
     }

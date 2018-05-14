@@ -35,7 +35,7 @@ export default function createStore(storeInstanceName, instance, baseStoreName, 
     if (store[type]) {
       resultingStore[type] = {};
       Object.keys(store[type]).forEach((name) => {
-        const newName = name.replace(baseStoreName, storeInstanceName);
+        const newName = name.replace(baseStoreName + '/', storeInstanceName + '/');
         resultingStore[type][newName] = store[type][name];
       });
     }
