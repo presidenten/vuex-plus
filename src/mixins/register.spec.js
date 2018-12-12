@@ -35,6 +35,10 @@ beforeEach(() => {
         },
       },
     },
+    $options: {
+      propsData: {
+      },
+    },
   };
   registerModule.setup(importer);
 
@@ -50,14 +54,14 @@ describe('register => mixin', () => {
   describe('mixin.created', () => {
     it('adds registers module on $store', () => {
       const mixin = register('foo-store');
-      mixin.created.call(self);
+      mixin.beforeCreate.call(self);
       expect(self.$store.registerModule).toBeCalled();
       mixin.destroyed.call(self);
     });
 
     it('adds $vuex+ propery', () => {
       const mixin = register.call(self, 'foo-store');
-      mixin.created.call(self);
+      mixin.beforeCreate.call(self);
       expect(self['$vuex+']).toEqual({
         baseStoreName: 'foo',
         moduleName: 'foo',
@@ -68,9 +72,9 @@ describe('register => mixin', () => {
 
     it('adds $vuex+ propery with camel cased instance', () => {
       importer.getModules.mockReturnValue({ 'foo-choo-store': module });
-      self.instance = 'bar';
+      self.$options.propsData.instance = 'bar';
       const mixin = register.call(self, 'foo-choo-store');
-      mixin.created.call(self);
+      mixin.beforeCreate.call(self);
       expect(self['$vuex+']).toEqual({
         baseStoreName: 'fooChoo',
         moduleName: 'fooChoo',
@@ -83,7 +87,7 @@ describe('register => mixin', () => {
   describe('mixin.destroyed', () => {
     it('removes stores without preseve=true', () => {
       const mixin = register.call(self, 'foo-store');
-      mixin.created.call(self);
+      mixin.beforeCreate.call(self);
       mixin.destroyed.call(self);
       expect(self.$store.unregisterModule).toBeCalledWith('foo');
     });
@@ -91,15 +95,15 @@ describe('register => mixin', () => {
     it('keeps stores with preseve=true', () => {
       self.preserve = true;
       const mixin = register.call(self, 'foo-store');
-      mixin.created.call(self);
+      mixin.beforeCreate.call(self);
       mixin.destroyed.call(self);
       expect(self.$store.unregisterModule).not.toBeCalledWith('foo');
     });
 
     it('removes stores without preseve=true, when no instances left', () => {
       const mixin = register.call(self, 'foo-store');
-      mixin.created.call(self);
-      mixin.created.call(self);
+      mixin.beforeCreate.call(self);
+      mixin.beforeCreate.call(self);
       mixin.destroyed.call(self);
       expect(self.$store.unregisterModule).not.toBeCalledWith('foo');
 
