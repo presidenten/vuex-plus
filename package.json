@@ -1,6 +1,6 @@
 {
   "name": "vuex-plus",
-  "version": "3.0.2",
+  "version": "4.0.0",
   "description": "Opinionated library that makes Vuex module instances possible",
   "main": "dist/vuex+.js",
   "scripts": {
