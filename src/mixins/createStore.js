@@ -43,7 +43,8 @@ export default function createStore(storeInstanceName, instance, baseStoreName, 
   if (resultingStore.modules) {
     resultingStore.modules = {};
     Object.keys(store.modules).forEach((subInstanceName) => {
-      resultingStore.modules[subInstanceName] = createStore(storeInstanceName, instance, baseStoreName, store.modules[subInstanceName], resultingStore.state); // eslint-disable-line
+      resultingStore.modules[subInstanceName] = createStore(storeInstanceName, instance, baseStoreName, store.modules[subInstanceName],
+        { getters: resultingStore.getters, actions: resultingStore.actions }); // eslint-disable-line
     });
   }
 
