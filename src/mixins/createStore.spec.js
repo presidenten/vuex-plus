@@ -97,8 +97,10 @@ describe('createStore', () => {
     const freshStore = createStore('foo$test', 'test', 'foo', store);
 
     expect(freshStore.state.$parent).toEqual(undefined);
-    expect(freshStore.modules.bar.state.$parent).toEqual(freshStore.state);
-    expect(freshStore.modules.bar.modules.piri.state.$parent).toEqual(freshStore.modules.bar.state);
+    let parent = { get: freshStore.getters, act: freshStore.actions };
+    expect(freshStore.modules.bar.state.$parent).toEqual(parent);
+    parent = { get: freshStore.modules.bar.getters, act: freshStore.modules.bar.actions }
+    expect(freshStore.modules.bar.modules.piri.state.$parent).toEqual(parent);
   });
 
   it('clones all other store properties', () => {
