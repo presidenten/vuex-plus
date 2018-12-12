@@ -97,9 +97,9 @@ describe('createStore', () => {
     const freshStore = createStore('foo$test', 'test', 'foo', store);
 
     expect(freshStore.state.$parent).toEqual(undefined);
-    let parent = { get: freshStore.getters, act: freshStore.actions };
+    let parent = { getters: freshStore.getters, actions: freshStore.actions };
     expect(freshStore.modules.bar.state.$parent).toEqual(parent);
-    parent = { get: freshStore.modules.bar.getters, act: freshStore.modules.bar.actions }
+    parent = { getters: freshStore.modules.bar.getters, actions: freshStore.modules.bar.actions }
     expect(freshStore.modules.bar.modules.piri.state.$parent).toEqual(parent);
   });
 
